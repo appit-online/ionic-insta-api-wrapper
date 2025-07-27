@@ -1,4 +1,4 @@
-import { CommentInformTreatment, FriendshipStatus, ImageVersions2, Item, MediaType, MimeType, SharingFrictionInfo, User } from '.';
+import { Item, MimeType, User } from '.';
 
 /** Instagram Simplified Stories Metadata */
 export interface IGStoriesMetadata {
@@ -8,6 +8,18 @@ export interface IGStoriesMetadata {
 	stories_count: number;
 	stories: ItemStories[] | null;
 	graphql: StoriesGraphQL;
+}
+
+export interface StoryUser {
+	id: string;
+	full_name: string;
+	username: string;
+	story_duration_secs: number;
+	media_count: number;
+	has_video: boolean;
+	profile_pic_url: string;
+	is_verified: boolean;
+	is_private: boolean;
 }
 
 /** an Array of simplified StoriesMetadata */

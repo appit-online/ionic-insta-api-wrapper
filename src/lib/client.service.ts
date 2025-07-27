@@ -1,7 +1,7 @@
 import { config } from '../config';
 import { HTTP } from '@awesome-cordova-plugins/http/ngx';
 import { ParserService } from './parser.service';
-import { Graphql, StoriesGraphQL, UserGraphQlV2 } from '../types';
+import { Graphql, StoriesGraphQL, StoryUser, UserGraphQlV2 } from '../types';
 
 export class InstaService {
   /**
@@ -74,6 +74,57 @@ export class InstaService {
     const graphql: Graphql = res?.data;
     return graphql.data?.user as UserGraphQlV2;
   }
+
+
+
+  /**
+   * fetches tray< stories>
+   * @param agent
+   * @returns
+   */
+  public async fetchTrayStories(agent: string = config.android) {
+    try{
+      console.log(this.cookie);
+      const params = {
+        "supported_capabilities_new": `[{"name":"SUPPORTED_SDK_VERSIONS","value":"100.0,101.0,102.0,103.0,104.0,105.0,106.0,107.0,108.0,109.0,110.0,111.0,112.0,113.0,114.0,115.0,116.0,117.0"},{"name":"FACE_TRACKER_VERSION","value":"14"},{"name":"segmentation","value":"segmentation_enabled"},{"name":"COMPRESSION","value":"ETC2_COMPRESSION"},{"name":"world_tracker","value":"world_tracker_enabled"},{"name":"gyroscope","value":"gyroscope_enabled"}]`,
+        "reason":                     "cold_start_fetch"
+      }
+      const res = await this.fetchAPI(
+        config.instagram_api_v1,
+        `/feed/reels_tray/`,
+        agent,
+      {params}
+      );
+
+      const tray = res?.data?.tray;
+
+      if (!Array.isArray(tray)) {
+        console.warn('Tray data is missing or not an array');
+        return [];
+      }
+
+      const mappedStories: StoryUser[] = tray
+        .filter(story => story?.user) // sicherstellen, dass "user" existiert
+        .slice(0, 10)                         // Nur die ersten 10 Stories
+        .map((story: any): StoryUser => ({
+          id: story.id?.toString() || '',
+          full_name: story.user?.full_name || '',
+          username: story.user?.username || '',
+          story_duration_secs: Number(story.story_duration_secs || 0),
+          media_count: Number(story.media_count || 0),
+          has_video: Boolean(story.has_video),
+          profile_pic_url: story.user?.profile_pic_url || '',
+          is_verified: Boolean(story.user?.is_verified),
+          is_private: Boolean(story.user?.is_private)
+        }));
+
+      return mappedStories;
+    } catch (error) {
+      console.error('Failed to fetch stories:', error);
+      return [];
+    }
+  }
+
 
   private async fetchAPI(
     baseURL: string,
