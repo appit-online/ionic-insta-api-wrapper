@@ -16,18 +16,17 @@ export class InstaService {
    * fetches stories metadata
    * @param {string} username username target to fetch the stories, also work with private profile if you use cookie \w your account that follows target account
    * @param {boolean} exportDetails instagram response body
-   * @param {string} agent provide different user agent
+   * @param headers - request headers
    * @returns
    */
-  public async getStories(username: string, exportDetails: boolean = false, agent: string = config.iPhone) {
+  public async getStories(username: string, exportDetails: boolean = false, headers: { [key: string]: string } = {}) {
     const parserService = new ParserService();
 
-    const userID = await this.getUIdByUsername(username, agent);
+    const userID = await this.getUIdByUsername(username, headers);
     const res = await this.fetchAPI(
       config.instagram_api_v1,
       `/feed/user/${userID}/reel_media/`,
-        agent
-    );
+        {headers});
     const graphql: StoriesGraphQL = res?.data;
     const isFollowing = typeof graphql.user?.friendship_status !== 'undefined';
 
@@ -51,25 +50,25 @@ export class InstaService {
   /**
    * get user id by username
    * @param username
-   * @param {string} agent provide different user agent
+   * @param headers
    * @returns
    */
-  public async getUIdByUsername (username: string, agent: string = config.iPhone): Promise<string>{
-    const res = await this.getUserDetails(username, agent);
+  public async getUIdByUsername (username: string, headers: { [key: string]: string } = {}): Promise<string>{
+    const res = await this.getUserDetails(username, headers);
     return res?.id as string;
   }
 
   /**
    * hmmm..?
    * @param username
-   * @param agent
+   * @param headers
    * @returns
    */
-  public async getUserDetails(username: string, agent: string = config.iPhone) {
+  public async getUserDetails(username: string, headers: { [key: string]: string } = {}) {
     const res = await this.fetchAPI(
       config.instagram_api_v1,
       `/users/web_profile_info/?username=${username}`,
-      agent,
+        headers,
     );
     const graphql: Graphql = res?.data;
     return graphql.data?.user as UserGraphQlV2;
@@ -80,9 +79,10 @@ export class InstaService {
   /**
    * fetches tray< stories>
    * @param agent
+   * @param headers
    * @returns
    */
-  public async fetchTrayStories(agent: string = config.android) {
+  public async fetchTrayStories(agent: string = config.android, headers: { [key: string]: string } = {}) {
     try{
       console.log(this.cookie);
       const params = {
@@ -92,8 +92,7 @@ export class InstaService {
       const res = await this.fetchAPI(
         config.instagram_api_v1,
         `/feed/reels_tray/`,
-        agent,
-      {params}
+        {params, headers}
       );
 
       const tray = res?.data?.tray;
@@ -129,7 +128,6 @@ export class InstaService {
   private async fetchAPI(
     baseURL: string,
     url: string = '',
-    agent: string = config.iPhone,
     options: {
       method?: 'GET' | 'POST' | 'PUT' | 'DELETE',
       headers?: { [key: string]: string },
@@ -142,7 +140,7 @@ export class InstaService {
     const fullUrl = baseURL + url;
     const method = (options.method || 'GET').toUpperCase();
 
-    const headers = options.headers || this.buildHeaders(agent);
+    const headers = this.buildHeaders(options.headers);
     const data = options.data || {};
     const params = options.params || {};
 
@@ -181,10 +179,9 @@ export class InstaService {
     }
   }
 
-  private buildHeaders = (agent: string = config.iPhone, options?: any) => {
+  private buildHeaders = (options?: any) => {
     const baseHeaders = {
-      'user-agent': agent,
-      'cookie': `${this.cookie}`,
+      'User-Agent': config.iPhone,
       'authority': 'www.instagram.com',
       'content-type': 'application/x-www-form-urlencoded',
       'origin': 'https://www.instagram.com',
