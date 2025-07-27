@@ -53,7 +53,7 @@ const igService = new instaStory.InstaService(userDetails.cookie);
 
 /**
  * Get insta stories
- * @param {string} username value (instaId).
+ * @param {string} username value
  * @param {boolean} export insta response
  * @param {string} User-Agent
  */
@@ -70,7 +70,7 @@ try {
 }
 
 {
-  "username":"vfb",
+   "username":"someuser",
    "stories_count": 37,
    "stories": [
     {
@@ -102,6 +102,131 @@ try {
         ...
   ]
 }
+
+
+/**
+ * Get insta stories
+ * @param {string} username value 
+ * @param {string} User-Agent
+ */
+// 📖 Fetch Instagram UserId
+try {
+  const uid = await igService.getUIdByUsername('someuser', "User-Agent"); 
+  console.log(uid);
+} catch (error: any) {
+  console.error('Unknown error:', error);
+}
+
+
+/**
+ * Get insta profile
+ * @param {string} username value
+ * @param {string} User-Agent
+ */
+// 📖 Fetch Instagram Stories
+try {
+  const profile = await igService.getUserDetails('someuser', "User-Agent");
+  console.log(profile);
+} catch (error: any) {
+  console.error('Unknown error:', error);
+}
+
+{
+  "ai_agent_type": null,
+  "biography": "Example biography with some emojis and mentions like @exampleuser.",
+  "bio_links": [
+    {
+      "title": "",
+      "lynx_url": "https://l.instagram.com/?u=http%3A%2F%2Fexample.com%2Fprofile&e=AT123456789",
+      "url": "http://example.com/profile",
+      "link_type": "external"
+    }
+  ],
+  "fb_profile_biolink": null,
+   "biography_with_entities": {
+      "raw_text": "Example biography with @users and #hashtags",
+      "entities": [
+        {
+          "user": {
+            "username": "exampleuser"
+          },
+          "hashtag": null
+        }
+      ]
+  },
+  "blocked_by_viewer": false,
+  "restricted_by_viewer": false,
+  "country_block": false,
+  "eimu_id": "1234567890",
+  "external_url": "http://example.com",
+  "external_url_linkshimmed": "https://l.instagram.com/?u=http%3A%2F%2Fexample.com&e=AT123456789",
+  "edge_followed_by": {
+    "count": 12345
+  },
+  "fbid": "17840000000000000",
+  "followed_by_viewer": true,
+  "edge_follow": {
+    "count": 150
+  },
+  "follows_viewer": false,
+  "full_name": "Example Name",
+  "group_metadata": null,
+  "has_ar_effects": false,
+  "has_clips": true,
+  "has_guides": false,
+  "has_chaining": true,
+  "has_channel": false,
+  "has_blocked_viewer": false,
+  "highlight_reel_count": 5,
+  "has_requested_viewer": false,
+  "hide_like_and_view_counts": false,
+  "id": "123456789",
+  "is_business_account": false,
+  "is_professional_account": true,
+  "is_supervision_enabled": false,
+  "is_guardian_of_viewer": false,
+  "is_supervised_by_viewer": false,
+  "is_supervised_user": false,
+  "is_embeds_disabled": false,
+  "is_joined_recently": false,
+  "guardian_id": null,
+  "business_address_json": null,
+  "business_contact_method": "UNKNOWN",
+  "business_email": null,
+  "business_phone_number": null,
+  "business_category_name": null,
+  "overall_category_name": null,
+  "category_enum": null,
+  "category_name": "Public Figure",
+  "is_private": false,
+  "is_verified": true,
+  "is_verified_by_mv4b": false,
+  "is_regulated_c18": false,
+  "edge_mutual_followed_by": {
+    "count": 0,
+    "edges": []
+  },
+  "pinned_channels_list_count": 0,
+  "profile_pic_url": "https://example.com/profile.jpg",
+  "profile_pic_url_hd": "https://example.com/profile_hd.jpg",
+  "requested_by_viewer": false,
+  "should_show_category": true,
+  "should_show_public_contacts": false,
+  "show_account_transparency_details": true,
+  "transparency_label": null,
+  "transparency_product": null,
+  "username": "exampleuser",
+  "pronouns": [],
+  "edge_owner_to_timeline_media": {
+      "count": 100,
+      "page_info": {
+        "has_next_page": true,
+        "end_cursor": ""
+      },
+      "edges": []
+  }
+}
+
 
 ```
 
