@@ -50,7 +50,7 @@ export class InstaService {
     const response: any = {
       username: graphql.user.username,
       stories_count: graphql.media_count,
-      stories: graphql.items.length === 0 ? null : parserService.parseStories(graphql),
+      media: graphql.items.length === 0 ? [] : parserService.parseStories(graphql),
     };
 
     if (exportDetails) {
@@ -266,14 +266,12 @@ export class InstaService {
     const urls: MediaUrls[] = [];
 
     if (!gql) return urls;
-
-    const safeCandidate = (v: any) => v?.image_versions2?.candidates?.[0] || {};
-    const safeVideo = (v: any) => v?.video_versions?.[0] || {};
+    const parserSvc = new ParserService();
 
     if (gql.product_type === ProductType.CAROUSEL) {
       gql.carousel_media?.forEach((v) => {
-        const img = safeCandidate(v);
-        const vid = safeVideo(v);
+        const img = parserSvc.safeCandidate(v);
+        const vid = parserSvc.safeVideo(v);
 
         urls.push({
           id: v.id || '',
@@ -288,8 +286,8 @@ export class InstaService {
       });
 
     } else if ([ProductType.REEL, ProductType.TV, ProductType.SINGLE].includes(gql.product_type as ProductType)) {
-      const img = safeCandidate(gql);
-      const vid = safeVideo(gql);
+      const img = parserSvc.safeCandidate(gql);
+      const vid = parserSvc.safeVideo(gql);
 
       urls.push({
         id: gql.id || '',
@@ -403,7 +401,7 @@ export class InstaService {
 
       return response;
     } catch (err) {
-      console.error('❌ FetchIGAPI Error:', err);
+      //console.error('❌ FetchIGAPI Error:', err);
       throw err;
     }
   }
