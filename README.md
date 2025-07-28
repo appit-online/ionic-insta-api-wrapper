@@ -144,7 +144,7 @@ try {
 {
    "username":"someuser",
    "stories_count": 37,
-   "stories": [
+   "media": [
     {
       "type": "image",
       "mimetype": "image/jpeg",

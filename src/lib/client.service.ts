@@ -81,7 +81,7 @@ export class InstaService {
     const res = await this.fetchAPI(
       config.instagram_api_v1,
       `/users/web_profile_info/?username=${username}`,
-        headers,
+        {headers},
     );
     const graphql: Graphql = res?.data;
     return graphql.data?.user as UserGraphQlV2;
@@ -100,7 +100,7 @@ export class InstaService {
     const res = await this.fetchAPI(
         config.instagram_api_v1,
         `/feed/user/${userID}/?max_id=${maxId}`,
-        headers
+        {headers},
     );
     const graphql: UserGraphQL = res?.data;
 
@@ -253,7 +253,7 @@ export class InstaService {
       const res = await this.fetchAPI(
         config.instagram_api_v1,
         `/media/${mediaId.toString()}/info/`,
-        headers,
+          {headers},
       )
       return res?.data
     } catch (error) {

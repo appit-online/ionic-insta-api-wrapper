@@ -60,7 +60,7 @@ export class LoginService {
 
         // Beispiel-Header
         const defaultHeaders: Record<string, string> = {
-            'User-Agent': 'Instagram 250.0.0.21.109 (iPhone; CPU iPhone OS 11_4 like Mac OS X; en_US; en-US; scale=2.00; 750x1334) AppleWebKit/605.1.15',
+            'User-Agent': 'Instagram 250.0.0.21.109 (iPhone; CPU iPhone OS 18_5 like Mac OS X; en_US; en-US; scale=2.00; 750x1334) AppleWebKit/605.1.15',
             'X-Ig-App-Id': '567067343352427',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'Accept-Language': 'en-US',
@@ -82,7 +82,6 @@ export class LoginService {
                 headers: res.headers,
             };
         } catch (err: any) {
-            console.error('Cordova HTTP Error:', err);
             throw new Error(err.error || 'Request failed');
         }
     }
