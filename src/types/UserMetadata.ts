@@ -94,7 +94,15 @@ export interface FeedItem {
 	}[];
 	video_duration?: number;
 	has_audio?: boolean;
+	thumbnail?: string;
+	url?: string;
+	type?: 'image' | 'video';
+	dimensions?: {
+		height: number;
+		width: number;
+	};
 }
+
 
 
 export interface UserDetails {

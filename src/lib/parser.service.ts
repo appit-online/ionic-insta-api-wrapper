@@ -25,7 +25,7 @@ export class ParserService {
         original_width: item.original_width,
         original_height: item.original_height,
         caption: item.caption,
-        thumbnail: img.url || '', // 👈 hinzugefügt
+        thumbnail: img.url || '',
       };
 
       if (item.media_type === 1) {

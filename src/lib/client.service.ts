@@ -104,71 +104,16 @@ export class InstaService {
     );
     const graphql: UserGraphQL = res?.data;
 
-    const parsedItems: FeedItem[] = graphql.items.map((item: any): FeedItem => ({
-      like_and_view_counts_disabled: item.like_and_view_counts_disabled,
-      has_privately_liked: item.has_privately_liked,
-      is_post_live_clips_media: item.is_post_live_clips_media,
-      is_quiet_post: item.is_quiet_post,
-      taken_at: item.taken_at,
-      has_tagged_users: item.has_tagged_users,
-      media_type: item.media_type,
-      code: item.code,
-      caption: item.caption ? { text: item.caption.text } : undefined,
-      play_count: item.play_count,
-      has_views_fetching: item.has_views_fetching,
-      ig_play_count: item.ig_play_count,
-      image_versions2: item.image_versions2
-          ? {
-            candidates: item.image_versions2.candidates.map((c: any) => ({
-              height: c.height,
-              width: c.width,
-              url: c.url,
-            })),
-          }
-          : undefined,
-      original_width: item.original_width,
-      original_height: item.original_height,
-      is_artist_pick: item.is_artist_pick,
-      location: item.location
-          ? {
-            pk: item.location.pk,
-            facebook_places_id: item.location.facebook_places_id,
-            external_source: item.location.external_source,
-            name: item.location.name,
-            address: item.location.address,
-            city: item.location.city,
-            has_viewer_saved: item.location.has_viewer_saved,
-            short_name: item.location.short_name,
-            lng: item.location.lng,
-            lat: item.location.lat,
-          }
-          : undefined,
-      lng: item.lng,
-      lat: item.lat,
-      like_count: item.like_count,
-      number_of_qualities: item.number_of_qualities,
-      video_versions: item.video_versions?.map((v: any) => ({
-        id: v.id,
-        url: v.url,
-        type: v.type,
-        height: v.height,
-        width: v.width,
-        bandwidth: v.bandwidth ?? null,
-      })),
-      video_duration: item.video_duration,
-      has_audio: item.has_audio,
-    }));
-
     return {
       id: graphql.user.pk,
       username: graphql.user.username,
-      fullname: graphql.user.full_name,
+      name: graphql.user.full_name,
       is_private: graphql.user.is_private,
       is_verified: graphql.user.is_verified,
       profile_pic_url: graphql.user.profile_pic_url,
       more_available: graphql.more_available,
       next_max_id: graphql.next_max_id,
-      items: parsedItems
+      media: this.parseInstagramFeedItems(graphql.items)
     }
   }
 
@@ -259,6 +204,75 @@ export class InstaService {
     } catch (error) {
       throw error
     }
+  }
+
+  parseInstagramFeedItems(graphqlItems: any[]): FeedItem[] {
+    return graphqlItems.map((item: any): FeedItem => {
+      const img = item.image_versions2?.candidates?.[0] || {};
+      const vid = item.video_versions?.[0] || {};
+
+      return {
+        like_and_view_counts_disabled: item.like_and_view_counts_disabled,
+        has_privately_liked: item.has_privately_liked,
+        is_post_live_clips_media: item.is_post_live_clips_media,
+        is_quiet_post: item.is_quiet_post,
+        taken_at: item.taken_at,
+        has_tagged_users: item.has_tagged_users,
+        media_type: item.media_type,
+        code: item.code,
+        caption: item.caption ? { text: item.caption.text } : undefined,
+        play_count: item.play_count,
+        has_views_fetching: item.has_views_fetching,
+        ig_play_count: item.ig_play_count,
+        image_versions2: item.image_versions2
+            ? {
+              candidates: item.image_versions2.candidates.map((c: any) => ({
+                height: c.height,
+                width: c.width,
+                url: c.url,
+              })),
+            }
+            : undefined,
+        original_width: item.original_width,
+        original_height: item.original_height,
+        is_artist_pick: item.is_artist_pick,
+        location: item.location
+            ? {
+              pk: item.location.pk,
+              facebook_places_id: item.location.facebook_places_id,
+              external_source: item.location.external_source,
+              name: item.location.name,
+              address: item.location.address,
+              city: item.location.city,
+              has_viewer_saved: item.location.has_viewer_saved,
+              short_name: item.location.short_name,
+              lng: item.location.lng,
+              lat: item.location.lat,
+            }
+            : undefined,
+        lng: item.lng,
+        lat: item.lat,
+        like_count: item.like_count,
+        number_of_qualities: item.number_of_qualities,
+        video_versions: item.video_versions?.map((v: any) => ({
+          id: v.id,
+          url: v.url,
+          type: v.type,
+          height: v.height,
+          width: v.width,
+          bandwidth: v.bandwidth ?? null,
+        })),
+        video_duration: item.video_duration,
+        has_audio: item.has_audio,
+        thumbnail: img.url || '',
+        url: item.media_type === MediaType.IMAGE ? img.url || '' : vid.url || '',
+        type: item.media_type === MediaType.IMAGE ? 'image' : 'video',
+        dimensions: {
+          height: item.media_type === MediaType.IMAGE ? img.height || 0 : vid.height || 0,
+          width: item.media_type === MediaType.IMAGE ? img.width || 0 : vid.width || 0,
+        },
+      };
+    });
   }
 
   private _formatSidecar(data: IRawBody): MediaUrls[] {
@@ -401,7 +415,6 @@ export class InstaService {
 
       return response;
     } catch (err) {
-      //console.error('❌ FetchIGAPI Error:', err);
       throw err;
     }
   }
