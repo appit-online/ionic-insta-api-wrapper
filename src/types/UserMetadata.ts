@@ -32,12 +32,70 @@ export interface IGUserMetadata {
 	public_email: string;
 	/** account type e.g Business | Personal .etc */
 	account_type: number;
+	items: FeedItem[];
 }
 
 export interface UserGraphQL {
 	user: UserDetails;
+	items: FeedItem[];
+	more_available: boolean;
+	next_max_id: string;
 	status: string;
 }
+
+export interface FeedItem {
+	like_and_view_counts_disabled: boolean;
+	has_privately_liked: boolean;
+	is_post_live_clips_media: boolean;
+	is_quiet_post: boolean;
+	taken_at: number;
+	has_tagged_users: boolean;
+	media_type: number;
+	code: string;
+	caption?: {
+		text: string;
+	};
+	play_count?: number;
+	has_views_fetching?: boolean;
+	ig_play_count?: number;
+	image_versions2?: {
+		candidates: {
+			height: number;
+			width: number;
+			url: string;
+		}[];
+	};
+	original_width: number;
+	original_height: number;
+	is_artist_pick: boolean;
+	location?: {
+		pk: string;
+		facebook_places_id: string;
+		external_source: string;
+		name: string;
+		address: string;
+		city: string;
+		has_viewer_saved: boolean;
+		short_name: string;
+		lng: number;
+		lat: number;
+	};
+	lng?: number;
+	lat?: number;
+	like_count: number;
+	number_of_qualities?: number;
+	video_versions?: {
+		id: string;
+		url: string;
+		type: number;
+		height: number;
+		width: number;
+		bandwidth: number | null;
+	}[];
+	video_duration?: number;
+	has_audio?: boolean;
+}
+
 
 export interface UserDetails {
 	pk: number;

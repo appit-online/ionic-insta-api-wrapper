@@ -1,7 +1,20 @@
 import { config } from '../config';
 import { HTTP } from '@awesome-cordova-plugins/http/ngx';
 import { ParserService } from './parser.service';
-import { Graphql, StoriesGraphQL, StoryUser, UserGraphQlV2 } from '../types';
+import {
+  FeedItem,
+  Graphql,
+  IPostModels,
+  IRawBody,
+  MediaType,
+  MediaUrls,
+  ProductType,
+  StoriesGraphQL,
+  StoryUser,
+  UserGraphQL,
+  UserGraphQlV2,
+} from '../types';
+import { getPostType, shortcodeFormatter, shortcodeToMediaID } from '../utils';
 
 export class InstaService {
   /**
@@ -75,16 +88,232 @@ export class InstaService {
   }
 
 
+  /**
+   * fetch profile by username. including email, phone number and posts
+   * @param {username} username
+   * @param maxId
+   * @param headers
+   * @returns
+   */
+  public async fetchUser(username: string, maxId: string = '', headers: { [key: string]: string } = {}): Promise<any> {
+    const userID = await this.getUIdByUsername(username, headers);
+    const res = await this.fetchAPI(
+        config.instagram_api_v1,
+        `/feed/user/${userID}/?max_id=${maxId}`,
+        headers
+    );
+    const graphql: UserGraphQL = res?.data;
+
+    const parsedItems: FeedItem[] = graphql.items.map((item: any): FeedItem => ({
+      like_and_view_counts_disabled: item.like_and_view_counts_disabled,
+      has_privately_liked: item.has_privately_liked,
+      is_post_live_clips_media: item.is_post_live_clips_media,
+      is_quiet_post: item.is_quiet_post,
+      taken_at: item.taken_at,
+      has_tagged_users: item.has_tagged_users,
+      media_type: item.media_type,
+      code: item.code,
+      caption: item.caption ? { text: item.caption.text } : undefined,
+      play_count: item.play_count,
+      has_views_fetching: item.has_views_fetching,
+      ig_play_count: item.ig_play_count,
+      image_versions2: item.image_versions2
+          ? {
+            candidates: item.image_versions2.candidates.map((c: any) => ({
+              height: c.height,
+              width: c.width,
+              url: c.url,
+            })),
+          }
+          : undefined,
+      original_width: item.original_width,
+      original_height: item.original_height,
+      is_artist_pick: item.is_artist_pick,
+      location: item.location
+          ? {
+            pk: item.location.pk,
+            facebook_places_id: item.location.facebook_places_id,
+            external_source: item.location.external_source,
+            name: item.location.name,
+            address: item.location.address,
+            city: item.location.city,
+            has_viewer_saved: item.location.has_viewer_saved,
+            short_name: item.location.short_name,
+            lng: item.location.lng,
+            lat: item.location.lat,
+          }
+          : undefined,
+      lng: item.lng,
+      lat: item.lat,
+      like_count: item.like_count,
+      number_of_qualities: item.number_of_qualities,
+      video_versions: item.video_versions?.map((v: any) => ({
+        id: v.id,
+        url: v.url,
+        type: v.type,
+        height: v.height,
+        width: v.width,
+        bandwidth: v.bandwidth ?? null,
+      })),
+      video_duration: item.video_duration,
+      has_audio: item.has_audio,
+    }));
+
+    return {
+      id: graphql.user.pk,
+      username: graphql.user.username,
+      fullname: graphql.user.full_name,
+      is_private: graphql.user.is_private,
+      is_verified: graphql.user.is_verified,
+      profile_pic_url: graphql.user.profile_pic_url,
+      more_available: graphql.more_available,
+      next_max_id: graphql.next_max_id,
+      items: parsedItems
+    }
+  }
+
 
   /**
-   * fetches tray< stories>
-   * @param agent
+   * fetches public post, reel,.. by url
+   * @param url
+   * @param {string} headers @optional - required for token authentication
+   * @returns
+   */
+  public async fetchPost(url: string, headers: { [key: string]: string } = {}): Promise<IPostModels> {
+    const post = shortcodeFormatter(url);
+    const metadata = await this.fetchPostByMediaId(post.media_id, headers)
+
+    const item = metadata?.items?.[0];
+
+    if (!item || !item.user) { // @ts-ignore
+      return {};
+    }
+
+    return {
+      username: item.user?.username || '',
+      name: item.user?.full_name || '',
+      postType: getPostType(item.product_type),
+      media_id: item.id || '',
+      shortcode: item.code || '',
+      createdAt: item.taken_at || 0,
+      likes: item.like_count ?? 0,
+      caption: item.caption?.text || '',
+      media_count: item.product_type === ProductType.CAROUSEL ? item.carousel_media_count ?? 0 : 1,
+      comment_count: item.comment_count ?? 0,
+      video_duration: item.video_duration ?? 0,
+      music: item.clips_metadata ?? {}, // oder {} wenn Struktur erwartet wird
+      media: this._formatSidecar(metadata) ?? [],
+    };
+
+  }
+
+  /**
+   * fetches public post, reel,.. by url
+   * @param shortCode
+   * @param {string} headers @optional - required for token authentication
+   * @returns
+   */
+  public async fetchPostByShortCode(shortCode: string, headers: { [key: string]: string } = {}): Promise<IPostModels> {
+    const mediaId = shortcodeToMediaID(shortCode);
+    const metadata = await this.fetchPostByMediaId(mediaId, headers)
+
+    const item = metadata?.items?.[0];
+
+    if (!item || !item.user) { // @ts-ignore
+      return {};
+    } // Oder {} oder Error-Throw, je nach Anwendungsfall
+
+    return {
+      username: item.user.username || '',
+      name: item.user.full_name || '',
+      postType: getPostType(item.product_type),
+      media_id: item.id || '',
+      shortcode: item.code || '',
+      createdAt: item.taken_at || 0,
+      likes: item.like_count ?? 0,
+      caption: item.caption?.text || '',
+      media_count: item.product_type === ProductType.CAROUSEL
+          ? item.carousel_media_count ?? 0
+          : 1,
+      comment_count: item.comment_count ?? 0,
+      video_duration: item.video_duration ?? 0,
+      music: item.clips_metadata ?? {},
+      media: this._formatSidecar(metadata) ?? [],
+    };
+  }
+
+  /**
+   * fetches post, reel,.. by mediaId
+   * @param mediaId
+   * @param {string} headers @optional - required for token authentication
+   * @returns
+   */
+  public async fetchPostByMediaId (mediaId: string | number, headers: { [key: string]: string } = {}): Promise<IRawBody> {
+    try {
+      const res = await this.fetchAPI(
+        config.instagram_api_v1,
+        `/media/${mediaId.toString()}/info/`,
+        headers,
+      )
+      return res?.data
+    } catch (error) {
+      throw error
+    }
+  }
+
+  private _formatSidecar(data: IRawBody): MediaUrls[] {
+    const gql = data.items?.[0];
+    const urls: MediaUrls[] = [];
+
+    if (!gql) return urls;
+
+    const safeCandidate = (v: any) => v?.image_versions2?.candidates?.[0] || {};
+    const safeVideo = (v: any) => v?.video_versions?.[0] || {};
+
+    if (gql.product_type === ProductType.CAROUSEL) {
+      gql.carousel_media?.forEach((v) => {
+        const img = safeCandidate(v);
+        const vid = safeVideo(v);
+
+        urls.push({
+          id: v.id || '',
+          thumbnail: img.url || '',
+          url: v.media_type === MediaType.IMAGE ? img.url || '' : vid.url || '',
+          type: v.media_type === MediaType.IMAGE ? 'image' : 'video',
+          dimensions: {
+            height: v.media_type === MediaType.IMAGE ? img.height || 0 : vid.height || 0,
+            width: v.media_type === MediaType.IMAGE ? img.width || 0 : vid.width || 0
+          }
+        });
+      });
+
+    } else if ([ProductType.REEL, ProductType.TV, ProductType.SINGLE].includes(gql.product_type as ProductType)) {
+      const img = safeCandidate(gql);
+      const vid = safeVideo(gql);
+
+      urls.push({
+        id: gql.id || '',
+        thumbnail: img.url || '',
+        url: gql.media_type === MediaType.IMAGE ? img.url || '' : vid.url || '',
+        type: gql.media_type === MediaType.IMAGE ? 'image' : 'video',
+        dimensions: {
+          height: gql.media_type === MediaType.IMAGE ? img.height || 0 : vid.height || 0,
+          width: gql.media_type === MediaType.IMAGE ? img.width || 0 : vid.width || 0
+        }
+      });
+    }
+
+    return urls;
+  }
+
+
+  /**
+   * fetches tray stories
    * @param headers
    * @returns
    */
   public async fetchTrayStories(headers: { [key: string]: string } = {}) {
     try{
-      console.log(this.cookie);
       const params = {
         "supported_capabilities_new": `[{"name":"SUPPORTED_SDK_VERSIONS","value":"100.0,101.0,102.0,103.0,104.0,105.0,106.0,107.0,108.0,109.0,110.0,111.0,112.0,113.0,114.0,115.0,116.0,117.0"},{"name":"FACE_TRACKER_VERSION","value":"14"},{"name":"segmentation","value":"segmentation_enabled"},{"name":"COMPRESSION","value":"ETC2_COMPRESSION"},{"name":"world_tracker","value":"world_tracker_enabled"},{"name":"gyroscope","value":"gyroscope_enabled"}]`,
         "reason":                     "cold_start_fetch"

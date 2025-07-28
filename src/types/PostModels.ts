@@ -4,7 +4,7 @@
 //
 //   "Set quicktype target language"
 
-import { Dimensions, postType, SharingFrictionInfo } from '.';
+import { Dimensions, SharingFrictionInfo } from '.';
 
 export interface IPostModels {
 	/** an Instagram Username */
@@ -18,7 +18,7 @@ export interface IPostModels {
 	/** post shortcode */
 	shortcode: string;
 	/** a timestamp of posted media */
-	taken_at_timestamp: number;
+	createdAt: number;
 	/** the number of user who like a instagram post */
 	likes: number;
 	/** an caption from instagram post */
@@ -32,13 +32,14 @@ export interface IPostModels {
 	/** music info will show if post is Reel */
 	music?: ClipsMetadata | null;
 	/** media urls */
-	links: MediaUrls[];
+	media: MediaUrls[];
 }
 
 export interface MediaUrls {
 	/** Media ID */
 	id: string;
 	type: string;
+	thumbnail: string;
 	/** url of downloadable media */
 	url: string;
 	dimensions: Dimensions;
