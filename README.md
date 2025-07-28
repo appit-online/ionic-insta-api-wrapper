@@ -33,7 +33,7 @@ npm install ionic-insta-story-search --save
 
 ### Using the library
 
-### Cookies Login
+### Cookie-based Authentication
 ```javascript
 import * as instaStory from 'ionic-insta-story-search';
 
@@ -52,7 +52,7 @@ localStorage.setItem('expires', userDetails.expires);
 const igService = new instaStory.InstaService(userDetails.cookie);
 ```
 
-### Auth-Token Login 
+### Token Authentication
 ```javascript
 import * as instaStory from 'ionic-insta-story-search';
 
@@ -126,7 +126,7 @@ console.log(storyTray);
  * Get insta stories
  * @param {string} username value
  * @param {boolean} export insta response @optional - include raw GraphQL data
- * @param {string} request headers @optional
+ * @param {string} request headers @optional - required for token authentication
  */
 // 📖 Fetch Instagram Stories
 try {
@@ -179,7 +179,7 @@ try {
 /**
  * Get insta stories
  * @param {string} username value
- * @param {string} request headers @optional
+ * @param {string} request headers @optional - required for token authentication
  */
 // 📖 Fetch Instagram UserId
 try {
