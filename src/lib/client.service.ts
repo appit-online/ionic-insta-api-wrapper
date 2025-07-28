@@ -82,7 +82,7 @@ export class InstaService {
    * @param headers
    * @returns
    */
-  public async fetchTrayStories(agent: string = config.android, headers: { [key: string]: string } = {}) {
+  public async fetchTrayStories(headers: { [key: string]: string } = {}) {
     try{
       console.log(this.cookie);
       const params = {
@@ -120,7 +120,7 @@ export class InstaService {
       return mappedStories;
     } catch (error) {
       console.error('Failed to fetch stories:', error);
-      return [];
+      throw error
     }
   }
 

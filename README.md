@@ -33,6 +33,7 @@ npm install ionic-insta-story-search --save
 
 ### Using the library
 
+### Cookies Login
 ```javascript
 import * as instaStory from 'ionic-insta-story-search';
 
@@ -49,17 +50,88 @@ localStorage.setItem('expires', userDetails.expires);
 
 // 📲 Initialize InstaService with your session cookie
 const igService = new instaStory.InstaService(userDetails.cookie);
+```
 
+### Auth-Token Login 
+```javascript
+import * as instaStory from 'ionic-insta-story-search';
+
+const username = 'your_instagram_username';
+const password = 'your_instagram_password';
+
+// 🔐 Get Instagram auth token
+const userDetails: any = await loginService.login(username, password, reqHeaders);
+
+// 💾 Save userDetails for reuse
+localStorage.setItem('userDetails', userDetails);
+
+// 📲 Initialize InstaService
+const igService = new instaStory.InstaService();
+
+const requestHeaders = {
+  'Authorization':userDetails.headers["ig-set-authorization"],
+  "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
+  "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
+  "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
+}
+
+const igService = new instaStory.InstaService();
+const storyTray = await igService.fetchTrayStories(requestHeaders);
+console.log(storyTray);
+
+[
+  {
+    "id": "21335",
+    "full_name": "Yoga Instructor",
+    "username": "mrstest",
+    "story_duration_secs": 5,
+    "media_count": 4,
+    "has_video": true,
+    "profile_pic_url": "https://scontent-muc2-1.cdninstagram.com/v/5770385_n.jpg",
+    "is_verified": false,
+    "is_private": false
+  },
+  ...
+]
+```
+
+```javascript
+
+/**
+ * Get insta story tray
+ * @param {string} request headers @optional
+ */
+// 📖 Fetch Instagram Stories
+const storyTray = await igService.fetchTrayStories(requestHeaders);
+console.log(storyTray);
+[
+  {
+  "id": "21335",
+  "full_name": "Yoga Instructor",
+  "username": "mrstest",
+  "story_duration_secs": 5,
+  "media_count": 4,
+  "has_video": true,
+  "profile_pic_url": "https://scontent-muc2-1.cdninstagram.com/v/5770385_n.jpg",
+  "is_verified": false,
+  "is_private": false
+  },
+  ...
+]
+```
+
+```javascript
 
 /**
  * Get insta stories
  * @param {string} username value
- * @param {boolean} export insta response
- * @param {string} User-Agent
+ * @param {boolean} export insta response @optional - include raw GraphQL data
+ * @param {string} request headers @optional
  */
 // 📖 Fetch Instagram Stories
 try {
-  const stories = await igService.getStories('someuser', true, "User-Agent"); // true = include raw GraphQL data
+  const reqHeaders = {}
+  const stories = await igService.getStories('someuser', true, reqHeaders); 
   console.log(stories);
 } catch (error: any) {
   if (error.message === 'private profile') {
@@ -106,12 +178,13 @@ try {
 
 /**
  * Get insta stories
- * @param {string} username value 
- * @param {string} User-Agent
+ * @param {string} username value
+ * @param {string} request headers @optional
  */
 // 📖 Fetch Instagram UserId
 try {
-  const uid = await igService.getUIdByUsername('someuser', "User-Agent"); 
+  const reqHeaders = {}
+  const uid = await igService.getUIdByUsername('someuser', reqHeaders); 
   console.log(uid);
 } catch (error: any) {
   console.error('Unknown error:', error);
@@ -121,11 +194,12 @@ try {
 /**
  * Get insta profile
  * @param {string} username value
- * @param {string} User-Agent
+ * @param {string} request headers @optional
  */
 // 📖 Fetch Instagram Stories
 try {
-  const profile = await igService.getUserDetails('someuser', "User-Agent");
+  const reqHeaders = {}
+  const profile = await igService.getUserDetails('someuser', reqHeaders);
   console.log(profile);
 } catch (error: any) {
   console.error('Unknown error:', error);
@@ -226,8 +300,6 @@ try {
       "edges": []
   }
 }
-
-
 ```
 
 ## Supported Node.js Versions

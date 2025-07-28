@@ -1,4 +1,4 @@
-import { getCookies} from './lib/handler';
+import { getCookies } from './lib/handler';
 
 
 export function getCookie(username: string, password: string, withLoginData: boolean = false) {
@@ -6,3 +6,4 @@ export function getCookie(username: string, password: string, withLoginData: boo
 }
 
 export { InstaService } from './lib/client.service';
+export { LoginService } from './lib/login.service';
