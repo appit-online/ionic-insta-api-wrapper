@@ -48,7 +48,10 @@ export class InstaService {
     }
 
     const response: any = {
+      id: graphql.id,
       username: graphql.user.username,
+      name: graphql.user.full_name,
+      profilePicture: graphql.user.profile_pic_url,
       stories_count: graphql.media_count,
       media: graphql.items.length === 0 ? [] : parserService.parseStories(graphql),
     };
@@ -97,6 +100,34 @@ export class InstaService {
    */
   public async fetchUser(username: string, maxId: string = '', headers: { [key: string]: string } = {}): Promise<any> {
     const userID = await this.getUIdByUsername(username, headers);
+    const res = await this.fetchAPI(
+        config.instagram_api_v1,
+        `/feed/user/${userID}/?max_id=${maxId}`,
+        {headers},
+    );
+    const graphql: UserGraphQL = res?.data;
+
+    return {
+      id: graphql.user.pk,
+      username: graphql.user.username,
+      name: graphql.user.full_name,
+      is_private: graphql.user.is_private,
+      is_verified: graphql.user.is_verified,
+      profile_pic_url: graphql.user.profile_pic_url,
+      more_available: graphql.more_available,
+      next_max_id: graphql.next_max_id,
+      media: this.parseInstagramFeedItems(graphql.items)
+    }
+  }
+
+  /**
+   * fetch profile by id. including email, phone number and posts
+   * @param {string} userID
+   * @param maxId
+   * @param headers
+   * @returns
+   */
+  public async fetchUserById(userID: string, maxId: string = '', headers: { [key: string]: string } = {}): Promise<any> {
     const res = await this.fetchAPI(
         config.instagram_api_v1,
         `/feed/user/${userID}/?max_id=${maxId}`,
