@@ -1,4 +1,4 @@
-# [ionic-insta-api-wrapper: Node.js](https://github.com/appit-online/ionic-insta-api-wrapper)
+# [ionic-insta-api-wrapper: Ionic](https://github.com/appit-online/ionic-insta-api-wrapper)
 
 A lightweight library to **fetch Instagram Stories, Reels, Highlights, user details, profiles, posts...**, including login and cookie handling — built for use in **Ionic** and **Cordova** environments with native HTTP support.
 
