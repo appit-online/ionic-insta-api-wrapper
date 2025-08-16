@@ -170,11 +170,10 @@ try {
 ```javascript
 
 /**
- * Get insta stories
+ * Get profile highlights
  * @param {string} username value
  * @param {string} request headers @optional - required for token authentication
  */
-// 📖 Fetch Instagram Stories
 try {
   const reqHeaders = {}
   const stories = await igService.getHighlights('someuser', reqHeaders);
