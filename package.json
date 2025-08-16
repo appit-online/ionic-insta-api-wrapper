@@ -1,7 +1,7 @@
 {
-  "name": "ionic-insta-story-search",
+  "name": "ionic-insta-api-wrapper",
   "version": "1.0.0",
-  "description": "Search stories on Insta in ionic apps",
+  "description": "Search stories, reels, posts, highlights... on Insta in ionic apps",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/appit-online/ionic-insta-story-search.git"
+    "url": "git+https://github.com/appit-online/ionic-insta-api-wrapper.git"
   },
   "keywords": [
     "instagram",
@@ -49,9 +49,9 @@
     "lib/**/*"
   ],
   "bugs": {
-    "url": "https://github.com/appit-online/ionic-insta-story-search/issues"
+    "url": "https://github.com/appit-online/ionic-insta-api-wrapper/issues"
   },
-  "homepage": "https://github.com/appit-online/ionic-insta-story-search#readme",
+  "homepage": "https://github.com/appit-online/ionic-insta-api-wrapper#readme",
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.7",

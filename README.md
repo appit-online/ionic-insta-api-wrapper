@@ -1,4 +1,4 @@
-# [ionic-insta-story-search: Node.js](https://github.com/appit-online/ionic-insta-story-search)
+# [ionic-insta-api-wrapper: Node.js](https://github.com/appit-online/ionic-insta-api-wrapper)
 
 A lightweight library to **fetch Instagram Stories, Reels, Highlights, user details, profiles, posts...**, including login and cookie handling — built for use in **Ionic** and **Cordova** environments with native HTTP support.
 
@@ -25,17 +25,17 @@ A lightweight library to **fetch Instagram Stories, Reels, Highlights, user deta
 ## 📦 Installation
 
 ```bash
-npm install ionic-insta-story-search
+npm install ionic-insta-api-wrapper
 
 ionic cordova plugin add cordova-plugin-advanced-http
-npm install ionic-insta-story-search --save
+npm install ionic-insta-api-wrapper --save
 ```
 
 ### Using the library
 
 ### Cookie-based Authentication
 ```javascript
-import * as instaStory from 'ionic-insta-story-search';
+import * as instaStory from 'ionic-insta-api-wrapper';
 
 const username = 'your_instagram_username';
 const password = 'your_instagram_password';
@@ -54,7 +54,7 @@ const igService = new instaStory.InstaService(userDetails.cookie);
 
 ### Token Authentication
 ```javascript
-import * as instaStory from 'ionic-insta-story-search';
+import * as instaStory from 'ionic-insta-api-wrapper';
 
 const username = 'your_instagram_username';
 const password = 'your_instagram_password';
@@ -604,4 +604,4 @@ Node.js.
 
 Apache Version 2.0
 
-See [LICENSE](https://github.com/appit-online/ionic-insta-story-search/blob/master/LICENSE)
+See [LICENSE](https://github.com/appit-online/ionic-insta-api-wrapper/blob/master/LICENSE)
