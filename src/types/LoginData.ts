@@ -56,6 +56,7 @@ export interface GrowthFrictionInfo {
     interventions: Interventions;
 }
 
+// tslint:disable-next-line:no-empty-interface
 export interface Interventions {
 }
 

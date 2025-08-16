@@ -42,6 +42,7 @@ export type csrfToken = string;
 /** instagram post type */
 export type postType = 'p' | 'reel' | 'tv'
 /** a formatted shortcode */
+// tslint:disable-next-line:class-name
 export interface formattedShortcode {
 	type: postType | string,
 	shortcode: string;

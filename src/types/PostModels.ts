@@ -294,6 +294,7 @@ export interface MusicAssetInfo {
 	territory_validity_periods: TerritoryValidityPeriods;
 }
 
+// tslint:disable-next-line:no-empty-interface
 export interface TerritoryValidityPeriods {}
 
 export interface MusicConsumptionInfo {
@@ -468,12 +469,6 @@ export interface Default {
 	file_size_kb: number;
 }
 
-export interface Candidate {
-	width: number;
-	height: number;
-	url: string;
-}
-
 export interface MusicMetadata {
 	music_canonical_id: string;
 	audio_type: null;
@@ -528,25 +523,6 @@ export interface CommentUser {
 	profile_pic_id: string;
 	is_verified: boolean;
 	follow_friction_type: number;
-}
-
-export interface ItemUser {
-	pk: number;
-	username: string;
-	full_name: string;
-	is_private: boolean;
-	profile_pic_url: string;
-	profile_pic_id: string;
-	friendship_status: FriendshipStatus;
-	is_verified: boolean;
-	follow_friction_type: number;
-	has_anonymous_profile_picture: boolean;
-	is_unpublished: boolean;
-	is_favorite: boolean;
-	latest_reel_media: number;
-	has_highlight_reels: boolean;
-	live_broadcast_id: null;
-	live_broadcast_visibility: null;
 }
 
 export interface FriendshipStatus {
