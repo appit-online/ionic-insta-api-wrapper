@@ -6,9 +6,18 @@ A lightweight library to **fetch Instagram Stories, Reels, Highlights, user deta
 
 ## 🚀 Features
 
-- 🔐 Login and fetch session cookie via `getCookie`
-- 🍪 Save & reuse session cookies with expiration check
-- 📖 Fetch public Instagram stories with `InstaService.getStories`
+- 🔐 Login and fetch session cookie or auth token via `getCookie` or `login`
+- 🍪 Save & reuse sessions
+- 📖 `InstaService.getStories` – Fetch Instagram stories
+- 📦 `InstaService.fetchTrayStories` – Fetch all stories in the user's tray
+- 🌟 `InstaService.getHighlights` – Fetch Instagram highlights for a user
+- 👤 `InstaService.getUIdByUsername` – Get the user ID by username
+- 📝 `InstaService.getUserDetails` – Fetch detailed user information
+- 📷 `InstaService.fetchUserProfilePosts` – Fetch posts from a user's profile
+- 🖼️ `InstaService.fetchUserPostsByUserId` – Fetch posts by user ID
+- 🔗 `InstaService.fetchContentByUrl` – Fetch content from a post URL
+- ✂️ `InstaService.fetchContentByShortCode` – Fetch content using Instagram shortcode
+- 🆔 `InstaService.fetchContentByMediaId` – Fetch content by media ID
 ---
 
 **Table of contents:**

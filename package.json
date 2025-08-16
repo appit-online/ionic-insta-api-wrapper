@@ -1,6 +1,6 @@
 {
   "name": "ionic-insta-api-wrapper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Search stories, reels, posts, highlights... on Insta in ionic apps",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
