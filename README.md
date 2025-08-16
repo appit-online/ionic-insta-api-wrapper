@@ -1,6 +1,6 @@
 # [ionic-insta-story-search: Node.js](https://github.com/appit-online/ionic-insta-story-search)
 
-A lightweight library to **fetch Instagram Stories, user details, profiles, posts...**, including login and cookie handling — built for use in **Ionic** and **Cordova** environments with native HTTP support.
+A lightweight library to **fetch Instagram Stories, Reels, Highlights, user details, profiles, posts...**, including login and cookie handling — built for use in **Ionic** and **Cordova** environments with native HTTP support.
 
 ---
 
@@ -67,6 +67,16 @@ localStorage.setItem('userDetails', userDetails);
 
 // 📲 Initialize InstaService
 const igService = new instaStory.InstaService();
+```
+
+```javascript
+
+/**
+ * Get insta story tray
+ * @param {string} request headers @optional - required for token authentication
+ */
+ // 📲 Initialize InstaService
+const igService = new instaStory.InstaService();
 
 const requestHeaders = {
   'Authorization':userDetails.headers["ig-set-authorization"],
@@ -75,33 +85,7 @@ const requestHeaders = {
   "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
 }
 
-const igService = new instaStory.InstaService();
-const storyTray = await igService.fetchTrayStories(requestHeaders);
-console.log(storyTray);
-
-[
-  {
-    "id": "21335",
-    "full_name": "Yoga Instructor",
-    "username": "mrstest",
-    "story_duration_secs": 5,
-    "media_count": 4,
-    "has_video": true,
-    "profile_pic_url": "https://scontent-muc2-1.cdninstagram.com/v/5770385_n.jpg",
-    "is_verified": false,
-    "is_private": false
-  },
-  ...
-]
-```
-
-```javascript
-
-/**
- * Get insta story tray
- * @param {string} request headers @optional
- */
-// 📖 Fetch Instagram Stories
+// 📖 Fetch Instagram Tray Stories
 const storyTray = await igService.fetchTrayStories(requestHeaders);
 console.log(storyTray);
 [
@@ -142,44 +126,138 @@ try {
 }
 
 {
-   "username":"someuser",
-   "stories_count": 37,
+   "id": "123008993",
+   "username": "someusername",
+   "name": "User Name", 
+   "profilePicture": "https://scontent-muc2-1.cdninstagram.com/v/t51.2885-19/403891526_89150552568277163_n.jpg",
+   "stories_count": 10,
    "media": [
     {
-      "type": "image",
-      "mimetype": "image/jpeg",
-      "url": "https://scontent-muc2-1.cdninstagram.com/",
-      "taken_at": 1753540298,
-      "expiring_at": 1753626698,
-      "id": "3685285611",
-      "original_width": 1179,
-      "original_height": 2096,
-      "has_audio": null,
-      "video_duration": null,
-      "caption": null
-    },
-    {
-      "type": "video",
-      "mimetype": "video/mp4",
-      "url": "https://scontent-muc2-1.cdninstagram.com/",
-      "taken_at": 1753547410,
-      "expiring_at": 1753633810,
-      "id": "36853452997406",
+      "id": "36999034226_191008993",
+      "taken_at": 1755282929,
+      "expiring_at": 1755369329,
       "original_width": 640,
       "original_height": 1136,
+      "caption": null,
+      "thumbnail": "https://scontent-muc2-1.cdninstagram.com/v/t51.2885-15/533658976_73414557283417579416565_n.jpg",
+      "thumbnailDefault": "https://scontent-muc2-1.cdninstagram.com/v/t51.2885-15/53365897678818856079416565_n.jpg",
+      "type": "video",
+      "mimetype": "video/mp4",
+      "url": "https://scontent-muc2-1.cdninstagram.com/o1/v/t2/f2/m78/AQOcKHtdfCkfdfJ5XMY96xY4_IiwMQ7vvgM9U1Yo-lcutWgH9AfdDbofL1f8Y13r7g647Gk.mp4",
       "has_audio": true,
-      "video_duration": 15.243,
-      "caption": null
+      "video_duration": 4.77
+    },
+    {
+      "id": "369972572609_191008993",
+      "taken_at": 1755261686,
+      "expiring_at": 1755348086,
+      "original_width": 1179,
+      "original_height": 2096,
+      "caption": null,
+      "thumbnail": "https://scontent-muc2-1.cdninstagram.com/v/t51.2885-15/5331086517083875_n.jpg",
+      "thumbnailDefault": "https://scontent-muc2-1.cdninstagram.com/v/t51.2885-15/533108886_701523226517083875_n.jpg",
+      "type": "image",
+      "mimetype": "image/jpeg",
+      "url": "https://scontent-muc2-1.cdninstagram.com/v/t51.2885-15/533108886_18525701523226517083875_n.jpg",
+      "has_audio": false,
+      "video_duration": 0
     },
         ...
   ]
 }
+```
 
+```javascript
 
 /**
  * Get insta stories
  * @param {string} username value
  * @param {string} request headers @optional - required for token authentication
+ */
+// 📖 Fetch Instagram Stories
+try {
+  const reqHeaders = {}
+  const stories = await igService.getHighlights('someuser', reqHeaders);
+  console.log(stories);
+} catch (error: any) {
+  console.error('Unknown error:', error);
+}
+
+{
+  "last_paginated_highlights_node_edited_at_ts": null,
+  "has_fetched_all_remaining_highlights": null,
+  "suggested_highlights": {},
+  "cursor": null,
+  "highlights_tray_type": "DEFAULT",
+  "my_week_enabled": null,
+  "status": "ok",
+  "tray": [
+  {
+    "id": "highlight:1234567890",
+    "reel_type": "highlight_reel",
+    "title": "Mein Highlight",
+    "created_at": 1700000000,
+    "is_pinned_highlight": false,
+    "prefetch_count": 0,
+    "disabled_reply_types": [
+      "story_remix_reply",
+      "story_selfie_reply"
+    ],
+    "highlight_reel_type": "DEFAULT",
+    "is_converted_to_clips": false,
+    "is_nux": false,
+    "can_gif_quick_reply": true,
+    "can_reshare": false,
+    "is_archived": false,
+    "strong_id__": "highlight:1234567890",
+    "cover_media": {
+      "crop_rect": [0.1, 0.1, 0.9, 0.9],
+      "media_id": "9876543210_123456789",
+      "upload_id": null,
+      "cropped_image_version": {
+        "height": 150,
+        "scans_profile": "",
+        "url": "https://example.com/cropped_image.jpg",
+        "width": 150
+      },
+      "full_image_version": null
+    },
+    "ranked_position": -1000,
+    "seen_ranked_position": -1000,
+    "media_count": 10,
+    "updated_timestamp": 1700001000,
+    "latest_reel_media": 1700000500,
+    "seen": null,
+    "can_reply": true,
+    "can_react_with_avatar": false,
+    "contains_stitched_media_blocked_by_rm": false,
+    "user": {
+      "pk": "123456789",
+      "full_name": "Max Mustermann",
+      "pk_id": "123456789",
+      "id": "123456789",
+      "strong_id__": "123456789",
+      "username": "max123",
+      "is_private": false,
+      "is_verified": false,
+      "profile_pic_id": "1111111111_123456789",
+      "profile_pic_url": "https://example.com/profile_pic.jpg",
+      "account_badges": [],
+      "interop_messaging_user_fbid": 999999999999,
+      "is_creator_agent_enabled": false
+    }
+  }
+]
+}
+
+
+````
+
+```javascript
+/**
+ * Get insta userId
+ * @param {string} username value
+ * @param {string} request headers @optional 
  */
 // 📖 Fetch Instagram UserId
 try {
@@ -196,7 +274,6 @@ try {
  * @param {string} username value
  * @param {string} request headers @optional
  */
-// 📖 Fetch Instagram Stories
 try {
   const reqHeaders = {}
   const profile = await igService.getUserDetails('someuser', reqHeaders);
@@ -299,6 +376,222 @@ try {
       },
       "edges": []
   }
+}
+```
+
+```javascript
+/**
+ * Get insta posts from user profile
+ * @param {string} username value
+ * @param {string} maxId - pagination of user posts - use response attribute next_max_id for more posts
+ * @param {string} request headers @optional
+ */
+try {
+  const reqHeaders = {}
+  const profile = await igService.fetchUserProfilePosts('someuser', '', reqHeaders);
+  console.log(profile);
+} catch (error: any) {
+  console.error('Unknown error:', error);
+}
+
+try {
+  const reqHeaders = {}
+  const profile = await igService.fetchUserPostsByUserId('190008993', '', reqHeaders);
+  console.log(profile);
+} catch (error: any) {
+  console.error('Unknown error:', error);
+}
+
+{
+  "id": "123455",
+  "username": "username",
+  "name": "User Name",
+  "is_private": false,
+  "is_verified": true,
+  "profile_pic_url": "https://scontent-muc2-1.cdninstagram.com/v/t51.2885-19/403891521097167925951577163_n.jpg",
+  "more_available": true,
+  "next_max_id": "3696312669046_13753680437",
+  "media": [
+  {
+    "like_and_view_counts_disabled": false,
+    "has_privately_liked": false,
+    "is_post_live_clips_media": false,
+    "is_quiet_post": false,
+    "taken_at": 1755342216,
+    "has_tagged_users": false,
+    "media_type": 2,
+    "code": "DUMMYCODE123",
+    "caption": {
+      "text": "🔥 Beispieltext 🔥\n\nHier steht ein Dummy-Beitrag mit Hashtags und Emojis. 🏆\n\n#Beispiel #Dummy #Test"
+    },
+    "play_count": 12345,
+    "has_views_fetching": true,
+    "ig_play_count": 12345,
+    "image_versions2": {
+      "candidates": [
+        {
+          "height": 1920,
+          "width": 1080,
+          "url": "https://example.com/image_1080.jpg"
+        },
+        {
+          "height": 1333,
+          "width": 750,
+          "url": "https://example.com/image_750.jpg"
+        },
+        {
+          "height": 1137,
+          "width": 640,
+          "url": "https://example.com/image_640.jpg"
+        },
+        {
+          "height": 853,
+          "width": 480,
+          "url": "https://example.com/image_480.jpg"
+        },
+        {
+          "height": 568,
+          "width": 320,
+          "url": "https://example.com/image_320.jpg"
+        }
+      ]
+    }
+  },...
+```
+
+```javascript
+
+/**
+ * Get post, reel... by url
+ * @param {string} url 
+ * @param {string} request headers @optional - required for token authentication
+ */
+try {
+  const requestHeaders = {
+    'Authorization':userDetails.headers["ig-set-authorization"],
+    "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
+    "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
+    "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
+  }
+  
+  const post = await igService.fetchContentByUrl('https://www.instagram.com/p/DM777IJO7rd/?igsh=MWM2ejl2Mm8zcWRtcg==', requestHeaders); 
+  console.log(post);
+} catch (error: any) {
+  console.error('Unknown error:', error);
+}
+
+/**
+ * Get post by shortCode
+ * @param {string} shortCode
+ * @param {string} request headers @optional - required for token authentication
+ */
+try {
+  const requestHeaders = {
+    'Authorization':userDetails.headers["ig-set-authorization"],
+    "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
+    "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
+    "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
+  }
+
+  const post = await igService.fetchContentByShortCode('AU7s3IJO7rd', requestHeaders);
+  console.log(post);
+} catch (error: any) {
+  console.error('Unknown error:', error);
+}
+
+{
+  "username": "dummyuser",
+  "name": "Max Mustermann",
+  "postType": "p",
+  "media_id": "123456789012345678_9876543210",
+  "shortcode": "ABC123XYZ",
+  "createdAt": 1700000000,
+  "likes": 42,
+  "caption": "Hier ist ein Dummy-Beitrag mit Bild. 🌟🥳 #dummy #testpost",
+  "media_count": 1,
+  "comment_count": 3,
+  "video_duration": 0,
+  "music": {},
+  "media": [
+    {
+      "id": "123456789012345678_9876543210",
+      "thumbnail": "https://via.placeholder.com/1080x1350.png?text=Thumbnail",
+      "url": "https://via.placeholder.com/1080x1350.png?text=Full+Image",
+      "type": "image",
+      "dimensions": {
+        "height": 1350,
+        "width": 1080
+      }
+    }
+  ]
+}
+```
+
+
+```javascript
+/**
+ * Get post, highlight, reel by mediaId
+ * @param {string} mediaId
+ * @param {string} request headers @optional - required for token authentication
+ */
+try {
+  const requestHeaders = {
+    'Authorization':userDetails.headers["ig-set-authorization"],
+    "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
+    "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
+    "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
+  }
+
+  const post = await igService.fetchContentByMediaId('3691741226493_45705178442', requestHeaders);
+  console.log(post);
+} catch (error: any) {
+  console.error('Unknown error:', error);
+}
+
+{
+  "num_results": 1,
+  "more_available": false,
+  "items": [
+    {
+      "like_and_view_counts_disabled": false,
+      "has_privately_liked": false,
+      "is_post_live_clips_media": false,
+      "is_quiet_post": false,
+      "taken_at": 1754655492,
+      "media_type": 2,
+      "code": "DUMMY_CODE_123",
+      "has_views_fetching": true,
+      "image_versions2": {
+        "candidates": [
+          {
+            "height": 1136,
+            "width": 640,
+            "url": "https://example.com/image1_1136x640.jpg"
+          },
+          {
+            "height": 852,
+            "width": 480,
+            "url": "https://example.com/image2_852x480.jpg"
+          },
+          {
+            "height": 568,
+            "width": 320,
+            "url": "https://example.com/image3_568x320.jpg"
+          },
+          {
+            "height": 426,
+            "width": 240,
+            "url": "https://example.com/image4_426x240.jpg"
+          },
+          {
+            "height": 640,
+            "width": 640,
+            "url": "https://example.com/image5_640x640.jpg"
+          }
+        ]
+      }
+    }
+  ]
 }
 ```
 

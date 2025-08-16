@@ -95,6 +95,7 @@ export interface FeedItem {
 	video_duration?: number;
 	has_audio?: boolean;
 	thumbnail?: string;
+	thumbnailDefault?: string;
 	url?: string;
 	type?: 'image' | 'video';
 	dimensions?: {

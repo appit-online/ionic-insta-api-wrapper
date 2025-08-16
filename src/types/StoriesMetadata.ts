@@ -1,15 +1,5 @@
 import { Item, MimeType, User } from '.';
 
-/** Instagram Simplified Stories Metadata */
-export interface IGStoriesMetadata {
-	/** Instagram username */
-	username: string;
-	/** stories count */
-	stories_count: number;
-	stories: ItemStories[] | null;
-	graphql: StoriesGraphQL;
-}
-
 export interface StoryUser {
 	id: string;
 	full_name: string;
@@ -28,6 +18,7 @@ export interface ItemStories {
 	mimetype: MimeType;
 	/** Downloadable media url */
 	url: string;
+	thumbnailVideoDefault: string;
 	/** a timestamp of posted media */
 	taken_at: number;
 	/** a timestamp of expire stories */

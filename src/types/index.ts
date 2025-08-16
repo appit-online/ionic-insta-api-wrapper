@@ -1,23 +1,11 @@
-export * from './HighlightMediaMetadata'
-export * from './HighlightMetadata'
-export * from './MediaConfigureOptions'
-export * from './PostFeedResult'
-export * from './PostMetadata'
 export * from './PostModels'
-export * from './PostStoryResult'
 export * from './StoriesMetadata'
 export * from './UserGraphQlV2'
 export * from './UserMetadata'
-export * from './PaginatedPosts'
 export * from './LoginData'
-export * from './searchFollow'
 
 /** instagram username */
 export type username = string;
-/** instagram user pk */
-export type userId = string;
-/** term to search for a user, it can be their name or username */
-export type seachTerm = string;
 /** instagram password */
 export type password = string;
 /** instagram post url can be post, reel, tv */

@@ -1,5 +1,3 @@
-import { PageInfo } from ".";
-
 export interface Graphql {
     data?:   Data;
     status?: string;
@@ -7,6 +5,11 @@ export interface Graphql {
 
 export interface Data {
     user?: UserGraphQlV2;
+}
+
+export interface PageInfo {
+    has_next_page: boolean;
+    end_cursor: string;
 }
 
 export interface UserGraphQlV2 {

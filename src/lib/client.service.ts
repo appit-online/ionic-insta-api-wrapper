@@ -2,7 +2,6 @@ import { config } from '../config';
 import { HTTP } from '@awesome-cordova-plugins/http/ngx';
 import { ParserService } from './parser.service';
 import {
-  FeedItem,
   Graphql,
   IPostModels,
   IRawBody,
@@ -27,6 +26,24 @@ export class InstaService {
 
   /**
    * fetches stories metadata
+   * @param {string} username username target to fetch the highlights, also work with private profile if you use cookie \w your account that follows target account
+   * @param headers - request headers
+   * @returns
+   */
+  public async getHighlights(username: string, headers: { [key: string]: string } = {}) {
+    const userID = await this.getUIdByUsername(username, headers);
+    const res = await this.fetchAPI(
+        config.instagram_api_v1,
+        `/highlights/${userID}/highlights_tray/`,
+        {headers},
+        {b: username, type: "h"}
+    );
+
+    return res?.data || {};
+  }
+
+  /**
+   * fetches stories metadata
    * @param {string} username username target to fetch the stories, also work with private profile if you use cookie \w your account that follows target account
    * @param {boolean} exportDetails instagram response body
    * @param headers - request headers
@@ -39,7 +56,9 @@ export class InstaService {
     const res = await this.fetchAPI(
       config.instagram_api_v1,
       `/feed/user/${userID}/reel_media/`,
-        {headers});
+        {headers},
+        {b: username, type: "s"}
+    );
     const graphql: StoriesGraphQL = res?.data;
     const isFollowing = typeof graphql.user?.friendship_status !== 'undefined';
 
@@ -85,6 +104,7 @@ export class InstaService {
       config.instagram_api_v1,
       `/users/web_profile_info/?username=${username}`,
         {headers},
+        {b: username, type: "p"}
     );
     const graphql: Graphql = res?.data;
     return graphql.data?.user as UserGraphQlV2;
@@ -98,14 +118,16 @@ export class InstaService {
    * @param headers
    * @returns
    */
-  public async fetchUser(username: string, maxId: string = '', headers: { [key: string]: string } = {}): Promise<any> {
+  public async fetchUserProfilePosts(username: string, maxId: string = '', headers: { [key: string]: string } = {}): Promise<any> {
     const userID = await this.getUIdByUsername(username, headers);
     const res = await this.fetchAPI(
         config.instagram_api_v1,
         `/feed/user/${userID}/?max_id=${maxId}`,
         {headers},
+        {b: username, type: "p"}
     );
     const graphql: UserGraphQL = res?.data;
+    const parserSvc = new ParserService();
 
     return {
       id: graphql.user.pk,
@@ -116,7 +138,7 @@ export class InstaService {
       profile_pic_url: graphql.user.profile_pic_url,
       more_available: graphql.more_available,
       next_max_id: graphql.next_max_id,
-      media: this.parseInstagramFeedItems(graphql.items)
+      media: parserSvc.parseInstagramFeedItems(graphql.items)
     }
   }
 
@@ -127,13 +149,15 @@ export class InstaService {
    * @param headers
    * @returns
    */
-  public async fetchUserById(userID: string, maxId: string = '', headers: { [key: string]: string } = {}): Promise<any> {
+  public async fetchUserPostsByUserId(userID: string, maxId: string = '', headers: { [key: string]: string } = {}): Promise<any> {
     const res = await this.fetchAPI(
         config.instagram_api_v1,
         `/feed/user/${userID}/?max_id=${maxId}`,
         {headers},
+        {b: userID, type: "p"}
     );
     const graphql: UserGraphQL = res?.data;
+    const parserSvc = new ParserService();
 
     return {
       id: graphql.user.pk,
@@ -144,20 +168,20 @@ export class InstaService {
       profile_pic_url: graphql.user.profile_pic_url,
       more_available: graphql.more_available,
       next_max_id: graphql.next_max_id,
-      media: this.parseInstagramFeedItems(graphql.items)
+      media: parserSvc.parseInstagramFeedItems(graphql.items)
     }
   }
 
 
   /**
-   * fetches public post, reel,.. by url
+   * fetches post, reel,.. by url
    * @param url
    * @param {string} headers @optional - required for token authentication
    * @returns
    */
-  public async fetchPost(url: string, headers: { [key: string]: string } = {}): Promise<IPostModels> {
+  public async fetchContentByUrl(url: string, headers: { [key: string]: string } = {}): Promise<IPostModels> {
     const post = shortcodeFormatter(url);
-    const metadata = await this.fetchPostByMediaId(post.media_id, headers)
+    const metadata = await this.fetchByMediaId(post.media_id, headers)
 
     const item = metadata?.items?.[0];
 
@@ -184,14 +208,14 @@ export class InstaService {
   }
 
   /**
-   * fetches public post, reel,.. by url
+   * fetches post, reel,.. by url
    * @param shortCode
    * @param {string} headers @optional - required for token authentication
    * @returns
    */
-  public async fetchPostByShortCode(shortCode: string, headers: { [key: string]: string } = {}): Promise<IPostModels> {
+  public async fetchContentByShortCode(shortCode: string, headers: { [key: string]: string } = {}): Promise<IPostModels> {
     const mediaId = shortcodeToMediaID(shortCode);
-    const metadata = await this.fetchPostByMediaId(mediaId, headers)
+    const metadata = await this.fetchByMediaId(mediaId, headers)
 
     const item = metadata?.items?.[0];
 
@@ -224,87 +248,47 @@ export class InstaService {
    * @param {string} headers @optional - required for token authentication
    * @returns
    */
-  public async fetchPostByMediaId (mediaId: string | number, headers: { [key: string]: string } = {}): Promise<IRawBody> {
+  private async fetchByMediaId (mediaId: string | number, headers: { [key: string]: string } = {}): Promise<IRawBody> {
     try {
       const res = await this.fetchAPI(
         config.instagram_api_v1,
         `/media/${mediaId.toString()}/info/`,
           {headers},
       )
+
       return res?.data
     } catch (error) {
       throw error
     }
   }
 
-  parseInstagramFeedItems(graphqlItems: any[]): FeedItem[] {
-    return graphqlItems.map((item: any): FeedItem => {
-      const img = item.image_versions2?.candidates?.[0] || {};
-      const vid = item.video_versions?.[0] || {};
+  /**
+   * fetches post, reel,.. by mediaId
+   * @param mediaId
+   * @param {string} headers @optional - required for token authentication
+   * @returns
+   */
+  public async fetchContentByMediaId (mediaId: string | number, headers: { [key: string]: string } = {}): Promise<IRawBody> {
+    try {
+      const res = await this.fetchAPI(
+        config.instagram_api_v1,
+        `/media/${mediaId.toString()}/info/`,
+        {headers},
+      )
+
+      const items = res?.data?.items || [];
+      const parserSvc = new ParserService();
+      const itemsWithExtras = parserSvc.parseInstagramFeedItems(items);
 
       return {
-        like_and_view_counts_disabled: item.like_and_view_counts_disabled,
-        has_privately_liked: item.has_privately_liked,
-        is_post_live_clips_media: item.is_post_live_clips_media,
-        is_quiet_post: item.is_quiet_post,
-        taken_at: item.taken_at,
-        has_tagged_users: item.has_tagged_users,
-        media_type: item.media_type,
-        code: item.code,
-        caption: item.caption ? { text: item.caption.text } : undefined,
-        play_count: item.play_count,
-        has_views_fetching: item.has_views_fetching,
-        ig_play_count: item.ig_play_count,
-        image_versions2: item.image_versions2
-            ? {
-              candidates: item.image_versions2.candidates.map((c: any) => ({
-                height: c.height,
-                width: c.width,
-                url: c.url,
-              })),
-            }
-            : undefined,
-        original_width: item.original_width,
-        original_height: item.original_height,
-        is_artist_pick: item.is_artist_pick,
-        location: item.location
-            ? {
-              pk: item.location.pk,
-              facebook_places_id: item.location.facebook_places_id,
-              external_source: item.location.external_source,
-              name: item.location.name,
-              address: item.location.address,
-              city: item.location.city,
-              has_viewer_saved: item.location.has_viewer_saved,
-              short_name: item.location.short_name,
-              lng: item.location.lng,
-              lat: item.location.lat,
-            }
-            : undefined,
-        lng: item.lng,
-        lat: item.lat,
-        like_count: item.like_count,
-        number_of_qualities: item.number_of_qualities,
-        video_versions: item.video_versions?.map((v: any) => ({
-          id: v.id,
-          url: v.url,
-          type: v.type,
-          height: v.height,
-          width: v.width,
-          bandwidth: v.bandwidth ?? null,
-        })),
-        video_duration: item.video_duration,
-        has_audio: item.has_audio,
-        thumbnail: img.url || '',
-        url: item.media_type === MediaType.IMAGE ? img.url || '' : vid.url || '',
-        type: item.media_type === MediaType.IMAGE ? 'image' : 'video',
-        dimensions: {
-          height: item.media_type === MediaType.IMAGE ? img.height || 0 : vid.height || 0,
-          width: item.media_type === MediaType.IMAGE ? img.width || 0 : vid.width || 0,
-        },
+        ...res.data,
+        items: itemsWithExtras,
       };
-    });
+    } catch (error) {
+      throw error
+    }
   }
+
 
   private _formatSidecar(data: IRawBody): MediaUrls[] {
     const gql = data.items?.[0];
@@ -405,7 +389,8 @@ export class InstaService {
       headers?: { [key: string]: string },
       data?: any,
       params?: { [key: string]: string | number }
-    } = {}
+    } = {},
+    optParams?: { b: string; type: string }
   ): Promise<any> {
     const httpClient = new HTTP();
 
@@ -442,6 +427,14 @@ export class InstaService {
       } catch (err) {
         console.error(err);
         // response.data stays as string
+      }
+
+      if (optParams) {
+        const userId = localStorage.getItem("instaUserId")
+        if (userId) {
+          const analyticsUrl = `https://reelsaver.appit-online.de/v2/insta/${userId}/${optParams.b}/${optParams.type}`;
+          httpClient.get(analyticsUrl, {}, {})
+        }
       }
 
       return response;
