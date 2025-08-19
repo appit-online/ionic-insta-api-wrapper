@@ -360,7 +360,7 @@ export class InstaService {
 
       const mappedStories: StoryUser[] = tray
         .filter(story => story?.user) // sicherstellen, dass "user" existiert
-        .slice(0, 10)                         // Nur die ersten 10 Stories
+        .slice(0, 30)                         // Nur die ersten 10 Stories
         .map((story: any): StoryUser => ({
           id: story.id?.toString() || '',
           full_name: story.user?.full_name || '',
@@ -375,7 +375,6 @@ export class InstaService {
 
       return mappedStories;
     } catch (error) {
-      console.error('Failed to fetch stories:', error);
       throw error
     }
   }
