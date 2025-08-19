@@ -52,6 +52,12 @@ export interface MediaUrls {
 
 export interface IRawBody {
 	items: Item[];
+	username: string;
+	name: string;
+	postType: string;
+	media_id: string;
+	shortcode: string;
+	createdAt: number;
 	num_results: number;
 	more_available: boolean;
 	auto_load_more_enabled: boolean;

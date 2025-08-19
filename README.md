@@ -557,9 +557,13 @@ try {
 }
 
 {
-  "num_results": 1,
-  "more_available": false,
-  "items": [
+  "username": "username",
+  "name": "Dummy Name",
+  "postType": "story",
+  "media_id": "369464054_458376602",
+  "shortcode": "DNFoF7y",
+  "createdAt": 1754155492,
+  "media": [
     {
       "like_and_view_counts_disabled": false,
       "has_privately_liked": false,

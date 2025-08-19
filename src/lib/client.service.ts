@@ -268,7 +268,7 @@ export class InstaService {
    * @param {string} headers @optional - required for token authentication
    * @returns
    */
-  public async fetchContentByMediaId (mediaId: string | number, headers: { [key: string]: string } = {}): Promise<IRawBody> {
+  public async fetchContentByMediaId (mediaId: string | number, headers: { [key: string]: string } = {}): Promise<any> {
     try {
       const res = await this.fetchAPI(
         config.instagram_api_v1,
@@ -280,9 +280,20 @@ export class InstaService {
       const parserSvc = new ParserService();
       const itemsWithExtras = parserSvc.parseInstagramFeedItems(items);
 
+      const item = res?.data?.items?.[0];
+
+      if (!item || !item.user) { // @ts-ignore
+        return {};
+      }
+
       return {
-        ...res.data,
-        items: itemsWithExtras,
+        username: item.user.username || '',
+        name: item.user.full_name || '',
+        postType: getPostType(item.product_type),
+        media_id: item.id || '',
+        shortcode: item.code || '',
+        createdAt: item.taken_at || 0,
+        media: itemsWithExtras,
       };
     } catch (error) {
       throw error

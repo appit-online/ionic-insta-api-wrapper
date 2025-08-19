@@ -20,6 +20,7 @@ export enum ProductType {
 	CAROUSEL = 'carousel_container',
 	REEL = 'clips',
 	TV = 'igtv',
+	STORY = 'story',
 	SINGLE = 'feed'
 }
 
@@ -33,6 +34,7 @@ export enum IGPostType {
 	'carousel_container' = 'p',
 	'clips' = 'reel',
 	'igtv' = 'tv',
+	'story' = 'story',
 	'feed' = 'p'
 }
 /** Mime Type */
@@ -40,7 +42,7 @@ export type MimeType = 'image/jpeg' | 'image/png' | 'video/mp4' | 'video/gif';
 /** csrf token */
 export type csrfToken = string;
 /** instagram post type */
-export type postType = 'p' | 'reel' | 'tv'
+export type postType = 'p' | 'reel' | 'tv' | 'story' | 'feed';
 /** a formatted shortcode */
 // tslint:disable-next-line:class-name
 export interface formattedShortcode {

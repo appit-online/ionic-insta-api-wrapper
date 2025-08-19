@@ -65,14 +65,24 @@ export const isIgPostUrl = (url: string): boolean => {
  * @returns 
  */
 export const getPostType = (type: string): postType => {
-    return type === ProductType.CAROUSEL
-        ? IGPostType.carousel_container
-        : type === ProductType.REEL
-            ? IGPostType.clips
-            : type === ProductType.SINGLE
-                ? IGPostType.feed
-                : type === ProductType.TV
-                    ? IGPostType.igtv
-                    : IGPostType.feed
-}
+    switch (type) {
+        case ProductType.CAROUSEL:
+            return IGPostType.carousel_container;
+
+        case ProductType.REEL:
+            return IGPostType.clips;
+
+        case ProductType.SINGLE:
+            return IGPostType.feed;
+
+        case ProductType.TV:
+            return IGPostType.igtv;
+
+        case ProductType.STORY: 
+            return IGPostType.story;
+
+        default:
+            return IGPostType.feed;
+    }
+};
 
