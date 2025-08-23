@@ -18,7 +18,7 @@ A lightweight library to **fetch Instagram Stories, Reels, Highlights, user deta
 - 🔗 `InstaService.fetchContentByUrl` – Fetch content from a post URL
 - ✂️ `InstaService.fetchContentByShortCode` – Fetch content using Instagram shortcode
 - 🆔 `InstaService.fetchContentByMediaId` – Fetch content by media ID
-- - ➕ `InstaService.follow` – Follow a user by username or user ID
+- ➕ `InstaService.follow` – Follow a user by username or user ID
 - ❤️ `InstaService.like` – Like a post by media ID
 ---
 
