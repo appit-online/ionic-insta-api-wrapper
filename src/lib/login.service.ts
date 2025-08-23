@@ -224,6 +224,7 @@ export class LoginService {
             } else if (userId && typeof userId === "number") {
                 localStorage.setItem("instaUserId", String(userId));
             }
+            // tslint:disable-next-line:no-empty
         } catch (err) {}
         try {
             const httpClient = new HTTP();
