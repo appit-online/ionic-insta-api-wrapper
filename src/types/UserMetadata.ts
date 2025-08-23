@@ -193,3 +193,26 @@ export interface ProfileContextLinksWithUserID {
 	end: number;
 	username: string;
 }
+
+export interface Friendship {
+	following: boolean;
+	followed_by: boolean;
+	incoming_request: boolean;
+	outgoing_request: boolean;
+	muting: boolean;
+	blocking: boolean;
+	is_bestie: boolean;
+	is_blocking_reel: boolean;
+	is_muting_reel: boolean;
+	is_private: boolean;
+	is_restricted: boolean;
+}
+
+export interface FriendResp {
+	status: string;
+	friendship_status: Friendship;
+}
+
+export interface LikeResponse {
+	status: string;
+}

@@ -51,12 +51,3 @@ export interface formattedShortcode {
 	url: string;
 	media_id: number | string
 }
-
-export interface IChangedProfilePicture {
-	changed_profile: boolean
-	id: number,
-	has_profile_pic: boolean,
-	profile_pic_url: string
-	profile_pic_url_hd: string
-	status: string
-}

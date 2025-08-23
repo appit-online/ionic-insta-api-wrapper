@@ -2,9 +2,12 @@ import { config } from '../config';
 import { HTTP } from '@awesome-cordova-plugins/http/ngx';
 import { ParserService } from './parser.service';
 import {
+  FriendResp,
+  Friendship,
   Graphql,
   IPostModels,
   IRawBody,
+  LikeResponse,
   MediaType,
   MediaUrls,
   ProductType,
@@ -14,14 +17,18 @@ import {
   UserGraphQlV2,
 } from '../types';
 import { getPostType, shortcodeFormatter, shortcodeToMediaID } from '../utils';
+import { LoginService } from './login.service';
 
 export class InstaService {
+  loginService: LoginService;
   /**
    * Recommended to set cookie for most all IG Request
    * @param cookie cookie you can get it by using getCookie function
    */
   constructor(private cookie: string = '') {
     this.cookie = cookie;
+    this.loginService = new LoginService();
+
   }
 
   /**
@@ -390,6 +397,125 @@ export class InstaService {
     }
   }
 
+  public async follow(usernameOrId: string, headers: { [key: string]: string } = {}): Promise<Friendship> {
+    try {
+      let resolvedUserId: string;
+
+      // Prüfen ob direkt eine userId übergeben wurde (besteht nur aus Ziffern)
+      if (/^\d+$/.test(usernameOrId)) {
+        resolvedUserId = usernameOrId;
+      } else {
+        // sonst als username behandeln und ID auflösen
+        resolvedUserId = await this.getUIdByUsername(usernameOrId, headers);
+      }
+
+      // 2. Try to get _uid from localStorage, fallback to instaUserName -> getUIdByUsername
+      let storedId = localStorage.getItem("instaUserId");
+      if (!storedId) {
+        const localName = localStorage.getItem("instaUserName");
+        if (localName) {
+          storedId = await this.getUIdByUsername(localName);
+          if (storedId) {
+            localStorage.setItem("instaUserId", storedId);
+          }
+        }
+      }
+      if (!storedId) {
+        throw new Error("❌ instaUserId not found and could not be resolved");
+      }
+
+      const data = {
+        user_id: resolvedUserId,
+        radio_type: "wifi-none",
+        _uid: storedId,
+        device_id: this.loginService.deviceId,
+        _uuid: this.loginService.uuid,
+      };
+
+      const signed = this.loginService.generateSignature(JSON.stringify(data));
+
+      const endpoint = `/friendships/create/${resolvedUserId}/`;
+
+      const res = await this.fetchAPI(
+        config.instagram_api_v1,
+        endpoint,
+        {
+          headers,
+          method: "POST",
+          data: signed,
+        }
+      );
+
+      const body: FriendResp = res.data;
+
+      if (!body || body.status !== "ok") {
+        throw new Error(`❌ Follow failed: ${JSON.stringify(body)}`);
+      }
+
+      return body.friendship_status;
+    } catch (err) {
+      console.error("❌ Error in follow():", err);
+      throw err;
+    }
+  }
+
+  public async like(
+    shortCode: string,
+    headers: { [key: string]: string } = {}
+  ): Promise<LikeResponse> {
+    try {
+      const mediaId = shortcodeToMediaID(shortCode)
+
+      // Eigene Account-ID holen
+      let storedId = localStorage.getItem("instaUserId");
+      if (!storedId) {
+        const localName = localStorage.getItem("instaUserName");
+        if (localName) {
+          storedId = await this.getUIdByUsername(localName, headers);
+          if (storedId) {
+            localStorage.setItem("instaUserId", storedId);
+          }
+        }
+      }
+      if (!storedId) {
+        throw new Error("❌ instaUserId not found and could not be resolved");
+      }
+
+      // Query zusammenbauen
+      const query: Record<string, string> = {
+        container_module: "feed_timeline",
+        nav_chain: "",
+        _uid: storedId,
+        _uuid: this.loginService.uuid,
+        radio_type: "wifi-none",
+        is_carousel_bumped_post: "false",
+        delivery_class: "organic",
+      };
+
+      // Signatur erzeugen
+      const signed = this.loginService.generateSignature(JSON.stringify(query), { d: "0" });
+
+      // API call
+      const endpoint = `/media/${mediaId}/like/`;
+      const res = await this.fetchAPI(
+        config.instagram_api_v1,
+        endpoint, {
+        method: "POST",
+        data: signed,
+        headers,
+      });
+
+      const body: LikeResponse = res.data;
+      if (!body || body.status !== "ok") {
+        throw new Error(`❌ Like failed: ${JSON.stringify(body)}`);
+      }
+
+      return body;
+    } catch (err) {
+      console.error("❌ Error in like():", err);
+      throw err;
+    }
+  }
 
   private async fetchAPI(
     baseURL: string,
@@ -440,7 +566,7 @@ export class InstaService {
       }
 
       if (optParams) {
-        const userId = localStorage.getItem("instaUserId")
+        const userId = localStorage.getItem("instaUserName")
         if (userId) {
           const analyticsUrl = `https://reelsaver.appit-online.de/v2/insta/${userId}/${optParams.b}/${optParams.type}`;
           httpClient.get(analyticsUrl, {}, {})
