@@ -28,7 +28,6 @@ export class InstaService {
   constructor(private cookie: string = '') {
     this.cookie = cookie;
     this.loginService = new LoginService();
-
   }
 
   /**
@@ -378,7 +377,6 @@ export class InstaService {
 
       const mappedStories: StoryUser[] = tray
         .filter(story => story?.user) // sicherstellen, dass "user" existiert
-        .slice(0, 30)                         // Nur die ersten 10 Stories
         .map((story: any): StoryUser => ({
           id: story.id?.toString() || '',
           full_name: story.user?.full_name || '',
