@@ -43,7 +43,7 @@
     "url": "https://paypal.me/dave7117",
     "type": "paypal"
   },
-  "author": "David Koller",
+  "author": "AppIT",
   "license": "ISC",
   "files": [
     "lib/**/*"
