@@ -44,7 +44,7 @@ npm install ionic-insta-api-wrapper --save
 
 ### Using the library
 
-### Cookie-based Authentication
+### Cookie-based Authentication - Beta
 ```javascript
 import * as instaStory from 'ionic-insta-api-wrapper';
 
@@ -72,6 +72,11 @@ const password = 'your_instagram_password';
 
 // 🔐 Get Instagram auth token
 let userDetails: any;
+let loginService = new instaStory.LoginService();
+const reqHeaders = {
+  'User-Agent': 'Instagram 177.0.0.30.119 Android (18/4.3; 320dpi; 720x1280; Xiaomi; HM 1SW; armani; qcom; en_US)',
+}
+
 try {
   userDetails = await loginService.login(username, password, reqHeaders);
 }catch(e: any) {
@@ -104,6 +109,7 @@ const requestHeaders = {
   "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
   "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
   "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
+  'User-Agent': 'Instagram 177.0.0.30.119 Android (18/4.3; 320dpi; 720x1280; Xiaomi; HM 1SW; armani; qcom; en_US)',
 }
 
 // 📖 Fetch Instagram Tray Stories
@@ -135,8 +141,15 @@ console.log(storyTray);
  */
 // 📖 Fetch Instagram Stories
 try {
-  const reqHeaders = {}
-  const stories = await igService.getStories('someuser', true, reqHeaders); 
+  const requestHeaders = {
+    'Authorization':userDetails.headers["ig-set-authorization"],
+    "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
+    "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
+    "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
+    'User-Agent': 'Instagram 177.0.0.30.119 Android (18/4.3; 320dpi; 720x1280; Xiaomi; HM 1SW; armani; qcom; en_US)',
+  }
+
+  const stories = await igService.getStories('someuser', true, requestHeaders);
   console.log(stories);
 } catch (error: any) {
   if (error.message === 'private profile') {
@@ -492,6 +505,7 @@ try {
     "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
     "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
     "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
+    'User-Agent': 'Instagram 177.0.0.30.119 Android (18/4.3; 320dpi; 720x1280; Xiaomi; HM 1SW; armani; qcom; en_US)',
   }
   
   const post = await igService.fetchContentByUrl('https://www.instagram.com/p/DM777IJO7rd/?igsh=MWM2ejl2Mm8zcWRtcg==', requestHeaders); 
@@ -511,6 +525,7 @@ try {
     "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
     "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
     "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
+    'User-Agent': 'Instagram 177.0.0.30.119 Android (18/4.3; 320dpi; 720x1280; Xiaomi; HM 1SW; armani; qcom; en_US)',
   }
 
   const post = await igService.fetchContentByShortCode('AU7s3IJO7rd', requestHeaders);
@@ -560,6 +575,7 @@ try {
     "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
     "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
     "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
+    'User-Agent': 'Instagram 177.0.0.30.119 Android (18/4.3; 320dpi; 720x1280; Xiaomi; HM 1SW; armani; qcom; en_US)',
   }
 
   const post = await igService.fetchContentByMediaId('3691741226493_45705178442', requestHeaders);
@@ -625,17 +641,18 @@ try {
 * Follow Account
 * @param {string} username or userId
 * @param {string} request headers @optional - required for token authentication
-  */
+*/
   try {
-  const requestHeaders = {
-  'Authorization':userDetails.headers["ig-set-authorization"],
-  "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
-  "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
-  "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
-  }
-  
-  const followed = await igService.follow('usernameOrId', requestHeaders);
-  console.log(followed);
+    const requestHeaders = {
+      'Authorization':userDetails.headers["ig-set-authorization"],
+      "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
+      "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
+      "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
+      'User-Agent': 'Instagram 177.0.0.30.119 Android (18/4.3; 320dpi; 720x1280; Xiaomi; HM 1SW; armani; qcom; en_US)',
+    }
+    
+    const followed = await igService.follow('usernameOrId', requestHeaders);
+    console.log(followed);
   
   } catch (error: any) {
     console.error('Unknown error:', error);
@@ -664,15 +681,15 @@ try {
 * @param {string} request headers @optional - required for token authentication
   */
   try {
-  const requestHeaders = {
-  'Authorization':userDetails.headers["ig-set-authorization"],
-  "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
-  "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
-  "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
-  }
-  
-  const liked = await igService.like('shortCode', requestHeaders);
-  console.log(liked);
+    const requestHeaders = {
+    'Authorization':userDetails.headers["ig-set-authorization"],
+    "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
+    "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
+    "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
+    }
+    
+    const liked = await igService.like('shortCode', requestHeaders);
+    console.log(liked);
   
   } catch (error: any) {
     console.error('Unknown error:', error);
