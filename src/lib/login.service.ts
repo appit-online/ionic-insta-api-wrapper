@@ -77,6 +77,7 @@ export class LoginService {
         const baseUrl = 'https://i.instagram.com/api/v1/';
         const url = `${baseUrl}${endpoint}`;
         const http = new HTTP();
+        http.setDataSerializer("urlencoded")
 
         // Beispiel-Header
         const defaultHeaders: Record<string, string> = {
