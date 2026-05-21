@@ -6,8 +6,9 @@ A lightweight library to **fetch Instagram Stories, Reels, Highlights, user deta
 
 ## 🚀 Features
 
-- 🔐 Login and fetch session cookie or auth token via `getCookie` or `login` / `login2FA`
-- 🍪 Save & reuse sessions
+- 🔐 Login (encrypted) with 2FA support — automatically saves session cookies to localStorage
+- 🔄 `setSession()` / `clearSession()` for multi-account switching
+- 🍪 Automatic cookie-based auth via `buildHeaders()` — no manual auth headers needed
 - 📖 `InstaService.getStories` – Fetch Instagram stories
 - 📦 `InstaService.fetchTrayStories` – Fetch all stories in the user's tray
 - 🌟 `InstaService.getHighlights` – Fetch Instagram highlights for a user
@@ -32,7 +33,6 @@ A lightweight library to **fetch Instagram Stories, Reels, Highlights, user deta
 
 ## Quickstart
 
-
 ## 📦 Installation
 
 ```bash
@@ -44,26 +44,71 @@ npm install ionic-insta-api-wrapper --save
 
 ### Using the library
 
-### Cookie-based Authentication - Beta
+### Cookie-based Authentication (recommended)
 ```javascript
 import * as instaStory from 'ionic-insta-api-wrapper';
 
 const username = 'your_instagram_username';
 const password = 'your_instagram_password';
 
-// 🔐 Get Instagram session cookie (with optional force refetch)
-const refetchCookie = true;
-const userDetails = await instaStory.getCookie(username, password, refetchCookie);
+// 🔐 Login — cookies are automatically saved to localStorage
+const loginService = new instaStory.LoginService();
+const reqHeaders = {
+  'User-Agent': 'Instagram 297.0.0.0.82 Android (30/11; 420dpi; 1080x2316; samsung; SM-G960F; generic; snapdragon855; en_US; 1234567890)',
+}
 
-// 💾 Save cookie & expiration for reuse
-localStorage.setItem('cookie', userDetails.cookie);
-localStorage.setItem('expires', userDetails.expires);
+let userDetails;
+try {
+  userDetails = await loginService.login(username, password, reqHeaders);
+} catch (e) {
+  // 2FA required
+  const rawBody = typeof e.error === 'object' ? e.error : JSON.parse(e.error);
+  if (rawBody.two_factor_required) {
+    const info = rawBody.two_factor_info;
+    const twoFactorCode = '123456'; // user-provided TOTP code
+    userDetails = await loginService.login2FA(password, twoFactorCode, info.two_factor_identifier, username, reqHeaders);
+  }
+}
 
-// 📲 Initialize InstaService with your session cookie
-const igService = new instaStory.InstaService(userDetails.cookie);
+// 💾 userDetails contains { body, headers, cookies }
+// Cookies are already saved to localStorage by the lib.
+// userDetails.cookies can be persisted for later use.
+
+// 📲 Initialize InstaService — auth headers are auto-included
+const igService = new instaStory.InstaService();
+
+// 📖 Fetch Instagram Tray Stories
+const storyTray = await igService.fetchTrayStories(reqHeaders);
+
+// 👤 Follow a user
+await igService.follow('someuser', reqHeaders);
+
+// ❤️ Like a post
+await igService.like('media_id', reqHeaders);
 ```
 
-### Token Authentication
+### Multi-Account Switching
+```javascript
+import * as instaStory from 'ionic-insta-api-wrapper';
+
+const igService = new instaStory.InstaService();
+
+// Switch to a different account's session
+// Values come from userDetails.cookies after login:
+//   userDetails = await loginService.login(username, password, reqHeaders);
+//   userDetails.cookies = { sessionid: '...', csrftoken: '...' }
+//
+// For persisted accounts, load from DB and pass the stored cookies:
+igService.setSession('stored_session_id', 'stored_csrf_token');
+await igService.like('media_id', reqHeaders); // uses switched session
+
+// Clear stored session
+igService.clearSession();
+```
+
+### Legacy: Token Authentication (no cookies)
+If you prefer to pass auth headers manually instead of using cookie-based auth:
+
 ```javascript
 import * as instaStory from 'ionic-insta-api-wrapper';
 
@@ -93,19 +138,10 @@ localStorage.setItem('userDetails', userDetails);
 
 // 📲 Initialize InstaService
 const igService = new instaStory.InstaService();
-```
 
-```javascript
-
-/**
- * Get insta story tray
- * @param {string} request headers @optional - required for token authentication
- */
- // 📲 Initialize InstaService
-const igService = new instaStory.InstaService();
-
-const requestHeaders = {
-  'Authorization':userDetails.headers["ig-set-authorization"],
+// Build auth headers from login response
+const authHeaders = {
+  'Authorization': userDetails.headers["ig-set-authorization"],
   "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
   "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
   "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
@@ -113,8 +149,8 @@ const requestHeaders = {
 }
 
 // 📖 Fetch Instagram Tray Stories
-const storyTray = await igService.fetchTrayStories(requestHeaders);
-console.log(storyTray);
+const storyTray = await igService.fetchTrayStories(authHeaders);
+```
 [
   {
   "id": "21335",
@@ -137,19 +173,12 @@ console.log(storyTray);
  * Get insta stories
  * @param {string} username value
  * @param {boolean} export insta response @optional - include raw GraphQL data
- * @param {string} request headers @optional - required for token authentication
+ * @param {string} request headers @optional - custom headers like User-Agent
  */
 // 📖 Fetch Instagram Stories
 try {
-  const requestHeaders = {
-    'Authorization':userDetails.headers["ig-set-authorization"],
-    "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
-    "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
-    "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
-    'User-Agent': 'Instagram 177.0.0.30.119 Android (18/4.3; 320dpi; 720x1280; Xiaomi; HM 1SW; armani; qcom; en_US)',
-  }
-
-  const stories = await igService.getStories('someuser', true, requestHeaders);
+  const reqHeaders = { 'User-Agent': 'Instagram 297.0.0.0.82 Android (30/11; 420dpi; ...)' }
+  const stories = await igService.getStories('someuser', true, reqHeaders);
   console.log(stories);
 } catch (error: any) {
   if (error.message === 'private profile') {
@@ -206,7 +235,7 @@ try {
 /**
  * Get profile highlights
  * @param {string} username value
- * @param {string} request headers @optional - required for token authentication
+ * @param {string} request headers @optional - custom headers like User-Agent
  */
 try {
   const reqHeaders = {}
@@ -497,18 +526,11 @@ try {
 /**
  * Get post, reel... by url
  * @param {string} url 
- * @param {string} request headers @optional - required for token authentication
+ * @param {string} request headers @optional - custom headers like User-Agent
  */
 try {
-  const requestHeaders = {
-    'Authorization':userDetails.headers["ig-set-authorization"],
-    "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
-    "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
-    "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
-    'User-Agent': 'Instagram 177.0.0.30.119 Android (18/4.3; 320dpi; 720x1280; Xiaomi; HM 1SW; armani; qcom; en_US)',
-  }
-  
-  const post = await igService.fetchContentByUrl('https://www.instagram.com/p/DM777IJO7rd/?igsh=MWM2ejl2Mm8zcWRtcg==', requestHeaders); 
+  const reqHeaders = { 'User-Agent': 'Instagram 297.0.0.0.82 Android (30/11; 420dpi; ...)' }
+  const post = await igService.fetchContentByUrl('https://www.instagram.com/p/DM777IJO7rd/', reqHeaders); 
   console.log(post);
 } catch (error: any) {
   console.error('Unknown error:', error);
@@ -517,18 +539,11 @@ try {
 /**
  * Get post by shortCode
  * @param {string} shortCode
- * @param {string} request headers @optional - required for token authentication
+ * @param {string} request headers @optional - custom headers like User-Agent
  */
 try {
-  const requestHeaders = {
-    'Authorization':userDetails.headers["ig-set-authorization"],
-    "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
-    "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
-    "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
-    'User-Agent': 'Instagram 177.0.0.30.119 Android (18/4.3; 320dpi; 720x1280; Xiaomi; HM 1SW; armani; qcom; en_US)',
-  }
-
-  const post = await igService.fetchContentByShortCode('AU7s3IJO7rd', requestHeaders);
+  const reqHeaders = { 'User-Agent': 'Instagram 297.0.0.0.82 Android (30/11; 420dpi; ...)' }
+  const post = await igService.fetchContentByShortCode('AU7s3IJO7rd', reqHeaders);
   console.log(post);
 } catch (error: any) {
   console.error('Unknown error:', error);
@@ -567,18 +582,11 @@ try {
 /**
  * Get post, highlight, reel by mediaId
  * @param {string} mediaId
- * @param {string} request headers @optional - required for token authentication
+ * @param {string} request headers @optional - custom headers like User-Agent
  */
 try {
-  const requestHeaders = {
-    'Authorization':userDetails.headers["ig-set-authorization"],
-    "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
-    "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
-    "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
-    'User-Agent': 'Instagram 177.0.0.30.119 Android (18/4.3; 320dpi; 720x1280; Xiaomi; HM 1SW; armani; qcom; en_US)',
-  }
-
-  const post = await igService.fetchContentByMediaId('3691741226493_45705178442', requestHeaders);
+  const reqHeaders = { 'User-Agent': 'Instagram 297.0.0.0.82 Android (30/11; 420dpi; ...)' }
+  const post = await igService.fetchContentByMediaId('3691741226493_45705178442', reqHeaders);
   console.log(post);
 } catch (error: any) {
   console.error('Unknown error:', error);
@@ -640,18 +648,12 @@ try {
 /**
 * Follow Account
 * @param {string} username or userId
-* @param {string} request headers @optional - required for token authentication
+* @param {string} request headers @optional - custom headers like User-Agent
 */
   try {
-    const requestHeaders = {
-      'Authorization':userDetails.headers["ig-set-authorization"],
-      "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
-      "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
-      "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
-      'User-Agent': 'Instagram 177.0.0.30.119 Android (18/4.3; 320dpi; 720x1280; Xiaomi; HM 1SW; armani; qcom; en_US)',
-    }
+    const reqHeaders = { 'User-Agent': 'Instagram 297.0.0.0.82 Android (30/11; 420dpi; ...)' }
     
-    const followed = await igService.follow('usernameOrId', requestHeaders);
+    const followed = await igService.follow('usernameOrId', reqHeaders);
     console.log(followed);
   
   } catch (error: any) {
@@ -678,17 +680,12 @@ try {
 /**
 * Like Post
 * @param {string} shortCode
-* @param {string} request headers @optional - required for token authentication
+* @param {string} request headers @optional - custom headers like User-Agent
   */
   try {
-    const requestHeaders = {
-    'Authorization':userDetails.headers["ig-set-authorization"],
-    "Ig-U-Ds-User-Id": userDetails.headers["ig-set-ig-u-ds-user-id"],
-    "Ig-U-Rur": userDetails.headers["ig-set-ig-u-rur"],
-    "X-Ig-Www-Claim": userDetails.headers["x-ig-set-www-claim"],
-    }
+    const reqHeaders = { 'User-Agent': 'Instagram 297.0.0.0.82 Android (30/11; 420dpi; ...)' }
     
-    const liked = await igService.like('shortCode', requestHeaders);
+    const liked = await igService.like('shortCode', reqHeaders);
     console.log(liked);
   
   } catch (error: any) {

