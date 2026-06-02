@@ -599,10 +599,10 @@ export class InstaService {
 
     const sessionId = localStorage.getItem('instaSessionId');
     const csrftoken = localStorage.getItem('instaCsrfToken');
-    if (sessionId && !merged.Cookie && !merged.cookie) {
+    if (sessionId && !merged['Cookie'] && !merged['cookie']) {
       const cookieParts = [`sessionid=${sessionId}`];
       if (csrftoken) cookieParts.push(`csrftoken=${csrftoken}`);
-      merged.Cookie = cookieParts.join('; ');
+      merged['Cookie'] = cookieParts.join('; ');
     }
 
     Object.keys(merged).forEach(key => {
