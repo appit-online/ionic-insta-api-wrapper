@@ -21,7 +21,6 @@ import { LoginService } from './login.service';
 
 export class InstaService {
   loginService: LoginService;
-
   /**
    * Recommended to set cookie for most all IG Request
    * @param cookie cookie you can get it by using getCookie function
@@ -579,7 +578,7 @@ export class InstaService {
   }
 
   private buildHeaders = (options?: any) => {
-    const baseHeaders: Record<string, string> = {
+    const baseHeaders = {
       'User-Agent': config.iPhone,
       'authority': 'www.instagram.com',
       'content-type': 'application/x-www-form-urlencoded',
@@ -588,38 +587,20 @@ export class InstaService {
       'sec-fetch-site': 'same-origin',
       'sec-fetch-mode': 'cors',
       'sec-fetch-dest': 'empty',
-      'x-ig-app-id': '936619743392459',
+      'x-ig-app-id': 936619743392459,
       'x-ig-www-claim': 'hmac.AR3W0DThY2Mu5Fag4sW5u3RhaR3qhFD_5wvYbOJOD9qaPjIf',
-      'x-instagram-ajax': '1',
+      'x-instagram-ajax': 1,
       'x-requested-with': 'XMLHttpRequest',
     };
 
     // Merge mit options und zwinge alle Werte zu Strings
     const merged = { ...baseHeaders, ...options };
 
-    const sessionId = localStorage.getItem('instaSessionId');
-    const csrftoken = localStorage.getItem('instaCsrfToken');
-    if (sessionId && !merged['Cookie'] && !merged['cookie']) {
-      const cookieParts = [`sessionid=${sessionId}`];
-      if (csrftoken) cookieParts.push(`csrftoken=${csrftoken}`);
-      merged['Cookie'] = cookieParts.join('; ');
-    }
-
     Object.keys(merged).forEach(key => {
       merged[key] = String(merged[key]);
     });
 
     return merged;
-  }
-
-  setSession(sessionId: string, csrftoken: string): void {
-    localStorage.setItem('instaSessionId', sessionId);
-    localStorage.setItem('instaCsrfToken', csrftoken);
-  }
-
-  clearSession(): void {
-    localStorage.removeItem('instaSessionId');
-    localStorage.removeItem('instaCsrfToken');
   }
 
 
