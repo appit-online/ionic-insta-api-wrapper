@@ -7,3 +7,4 @@ export function getCookie(username: string, password: string, withLoginData: boo
 
 export { InstaService } from './lib/client.service';
 export { LoginService } from './lib/login.service';
+export type { LoginServiceConfig } from './lib/login.service';

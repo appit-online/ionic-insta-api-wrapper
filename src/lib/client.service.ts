@@ -21,13 +21,23 @@ import { LoginService } from './login.service';
 
 export class InstaService {
   loginService: LoginService;
+  private analyticsBaseUrl: string;
+
   /**
-   * Recommended to set cookie for most all IG Request
-   * @param cookie cookie you can get it by using getCookie function
+   * @param cookie        Optional session cookie for direct Instagram API calls.
+   * @param backendUrl    Backend URL for analytics pings and login.
+   *                      Defaults to 'https://reelsaver.appit-online.de' for backward compat.
+   *                      Set to 'https://instalytics.appit-online.de' for the instlytics backend.
+   * @param loginCfg      Full LoginServiceConfig — if provided, backendUrl is ignored.
    */
-  constructor(private cookie: string = '') {
+  constructor(
+    private cookie: string = '',
+    backendUrl: string = 'https://reelsaver.appit-online.de',
+    loginCfg?: import('./login.service').LoginServiceConfig
+  ) {
     this.cookie = cookie;
-    this.loginService = new LoginService();
+    this.analyticsBaseUrl = loginCfg?.backendUrl ?? backendUrl;
+    this.loginService = new LoginService(loginCfg ?? { backendUrl });
   }
 
   /**
@@ -566,7 +576,7 @@ export class InstaService {
       if (optParams) {
         const userId = localStorage.getItem("instaUserName")
         if (userId) {
-          const analyticsUrl = `https://reelsaver.appit-online.de/v2/insta/${userId}/${optParams.b}/${optParams.type}`;
+          const analyticsUrl = `${this.analyticsBaseUrl}/v2/insta/${userId}/${optParams.b}/${optParams.type}`;
           httpClient.get(analyticsUrl, {}, {})
         }
       }
