@@ -478,14 +478,26 @@ export function bloksExtractSession(rawStr: string): BloksLoginResult | null {
   const token = rawStr.slice(idx, end);
   const authorization = `Bearer ${token}`;
 
-  // ds_user_id from raw string
-  const uidMarker = '"ds_user_id":"';
-  const uidIdx = rawStr.indexOf(uidMarker);
+  // Parse userId from the IGT token itself (IGT:2:BASE64 → JSON with ds_user_id)
   let userId = '';
-  if (uidIdx !== -1) {
-    const uStart = uidIdx + uidMarker.length;
-    const uEnd   = rawStr.indexOf('"', uStart);
-    if (uEnd > uStart) userId = rawStr.slice(uStart, uEnd);
+  const lastColon = token.lastIndexOf(':');
+  if (lastColon > 0) {
+    try {
+      const decoded = atob(token.slice(lastColon + 1));
+      const parsed = JSON.parse(decoded);
+      if (parsed.ds_user_id) userId = String(parsed.ds_user_id);
+    } catch (_) {}
+  }
+
+  // Fallback: search raw string for ds_user_id
+  if (!userId) {
+    const uidMarker = '"ds_user_id":"';
+    const uidIdx = rawStr.indexOf(uidMarker);
+    if (uidIdx !== -1) {
+      const uStart = uidIdx + uidMarker.length;
+      const uEnd   = rawStr.indexOf('"', uStart);
+      if (uEnd > uStart) userId = rawStr.slice(uStart, uEnd);
+    }
   }
 
   return { authorization, userId };
