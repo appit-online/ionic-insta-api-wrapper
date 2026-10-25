@@ -88,7 +88,8 @@ const highlights = await igService.getHighlights('someuser', authHeaders);
 
 ```typescript
 const uid = await igService.getUIdByUsername('someuser', authHeaders);
-const profile = await igService.getUserDetails('someuser', authHeaders);
+const profile = await igService.getUserDetails('someuser', authHeaders);  // web/GraphQL
+const profileV1 = await igService.getUserInfoV1('someuser', authHeaders); // V1 Private API (use with Bloks auth)
 ```
 
 ### Posts
