@@ -127,15 +127,14 @@ export class InstaService {
   }
 
   /**
-   * V1 Private API user info — works with Android/Bloks auth tokens.
+   * V1 Private API user info by user ID — works with Android/Bloks auth tokens.
    * Use this instead of getUserDetails when logged in via Bloks CAA.
    */
-  public async getUserInfoV1(username: string, headers: { [key: string]: string } = {}): Promise<any> {
+  public async getUserInfoV1(userId: string, headers: { [key: string]: string } = {}): Promise<any> {
     const res = await this.fetchAPI(
       config.instagram_api_v1,
-      `/users/${username}/usernameinfo/`,
-      {headers},
-      {b: username, type: "p"}
+      `/users/${userId}/info/`,
+      {headers, method: 'GET', params: { is_prefetch: 'false', entry_point: 'self_profile', from_module: 'self_profile' }},
     );
     return res?.data?.user ?? {};
   }
