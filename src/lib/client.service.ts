@@ -588,22 +588,15 @@ export class InstaService {
   }
 
   private buildHeaders = (options?: any) => {
-    const baseHeaders = {
-      'User-Agent': config.iPhone,
-      'authority': 'www.instagram.com',
+    const baseHeaders: Record<string, string | number> = {
+      'User-Agent': 'Instagram 428.0.0.47.67 Android (34/14; 480dpi; 1344x2992; Google/google; Pixel 8 Pro; husky; husky; en_US; 961145276)',
       'content-type': 'application/x-www-form-urlencoded',
-      'origin': 'https://www.instagram.com',
-      'accept-language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
-      'sec-fetch-site': 'same-origin',
-      'sec-fetch-mode': 'cors',
-      'sec-fetch-dest': 'empty',
-      'x-ig-app-id': 936619743392459,
-      'x-ig-www-claim': 'hmac.AR3W0DThY2Mu5Fag4sW5u3RhaR3qhFD_5wvYbOJOD9qaPjIf',
-      'x-instagram-ajax': 1,
-      'x-requested-with': 'XMLHttpRequest',
+      'accept-language': 'en-US',
+      'x-ig-app-id': '567067343352427',
+      'X-Bloks-Version-Id': '7189b949425f9bf80ea8bd880cf5a3080b292d9b1c4b38a18d112f7c4b71e7a8',
+      'X-FB-HTTP-Engine': 'Liger',
     };
 
-    // Merge mit options und zwinge alle Werte zu Strings
     const merged = { ...baseHeaders, ...options };
 
     Object.keys(merged).forEach(key => {
