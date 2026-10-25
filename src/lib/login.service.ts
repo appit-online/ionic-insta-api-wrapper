@@ -6,21 +6,18 @@ import { v4 as uuidv4 } from 'uuid';
 // ─── Configuration ───────────────────────────────────────────────────────────
 //
 // Login via Instagram Bloks CAA directly from the user's device.
-// All Instagram traffic uses the user's IP — the backend is never used as
-// a login proxy, so there is no risk of server IP bans.
+// All Instagram traffic uses the user's IP — the backend is never contacted
+// for login. The backend is only used for /v2/insta/verify (follow/like).
 //
-// The backend is only contacted for:
-//   - /api/details  — device params (User-Agent, bloksVersioningId)
-//   - /v2/insta/verify — follow/like instructions after login
+// Device params (User-Agent, bloksVersioningId) use hardcoded defaults.
+// To override: call loginService.setDeviceParams({ ... }) before login().
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface LoginServiceConfig {
-  /** Base URL of the backend. Used only for device params and verify. No trailing slash. */
+  /** Base URL of the backend. Used only for verify (follow/like on login). No trailing slash. */
   backendUrl?: string;
-  /** Path to device-params endpoint. Defaults to /api/details */
-  headersPath?: string;
-  /** Path to the verify endpoint (follow/like on login). Defaults to /v2/insta/verify */
+  /** Path to the verify endpoint. Defaults to /v2/insta/verify */
   verifyPath?: string;
 }
 
@@ -30,15 +27,12 @@ export class LoginService {
   private phoneId: string;
 
   private readonly backendUrl: string;
-  private readonly headersPath: string;
   private readonly verifyPath: string;
 
   private readonly bloksSvc: BloksLoginService;
-  private deviceParamsLoaded = false;
 
   constructor(private cfg: LoginServiceConfig = {}) {
     this.backendUrl  = cfg.backendUrl  ?? 'https://reelsaver.appit-online.de';
-    this.headersPath = cfg.headersPath ?? '/api/details';
     this.verifyPath  = cfg.verifyPath  ?? '/v2/insta/verify';
 
     this.uuid     = this.getOrCreate('insta_uuid', uuidv4);
@@ -48,17 +42,12 @@ export class LoginService {
     this.bloksSvc = new BloksLoginService(this.uuid, this.phoneId, this.deviceId);
   }
 
-  private async loadDeviceParams(): Promise<void> {
-    if (this.deviceParamsLoaded) return;
-    this.deviceParamsLoaded = true;
-    try {
-      const http = new HTTP();
-      const resp = await http.get(`${this.backendUrl}${this.headersPath}`, {}, {});
-      const p: BloksDeviceParams = typeof resp.data === 'string' ? JSON.parse(resp.data) : resp.data;
-      if (p?.bloksVersioningId || p?.version) {
-        this.bloksSvc.setDeviceParams(p);
-      }
-    } catch (_) {}
+  /**
+   * Override device parameters used for Bloks login headers.
+   * Call before login() to match your backend's configuration.
+   */
+  public setDeviceParams(p: BloksDeviceParams): void {
+    this.bloksSvc.setDeviceParams(p);
   }
 
   // ─── Public login API ───────────────────────────────────────────────────────
@@ -68,8 +57,6 @@ export class LoginService {
     pass: string,
     reqHeaders: { [key: string]: string } = {}
   ): Promise<any> {
-    await this.loadDeviceParams();
-
     const result = await this.bloksSvc.login(username, pass);
 
     if (result.twoFactorRequired) {
